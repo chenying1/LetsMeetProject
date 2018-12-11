@@ -8,8 +8,10 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -34,24 +36,19 @@ public class MyView extends View {
     private float preX;
     private float preY;
 
-    private float translateX = 0;
-    private float translateY = 0;
-
     private int centerX;
     private int centerY;
 
     private float degree;      //箭头角度
     private int stepLen = 10;  //步长
 
-    private boolean isStart = false;
-
-
-    private Timer timer = new Timer();
-    private TimerTask task;
-
     private float scale = 1.0f;
+    private float translateX = 0;
+    private float translateY = 0;
 
-    private GestureDetector mScaleGestureDetector = null;
+    private boolean isStart = false;
+    private GestureDetector gestureDetector = null;
+    private ScaleGestureDetector scaleGestureDetector = null;
 
     private Context context ;
 
@@ -97,7 +94,8 @@ public class MyView extends View {
         pathPaint.setStrokeWidth(3);
         pathPaint.setAntiAlias(true);
 
-        mScaleGestureDetector = new GestureDetector(context,new GestureListener());
+        gestureDetector = new GestureDetector(context,new GestureListener());
+        scaleGestureDetector = new ScaleGestureDetector(context, new ScaleGestureListener());
     }
 
     public void setArrowColor(int color){
@@ -124,56 +122,10 @@ public class MyView extends View {
                 isStart = false;
                 break;
         }
-        mScaleGestureDetector.onTouchEvent(event);
+        gestureDetector.onTouchEvent(event);
+        scaleGestureDetector.onTouchEvent(event);
 
         return true;
-    }
-
-
-    public class GestureListener implements GestureDetector.OnGestureListener{
-        private float preScrollX = 0;
-        private float preScrollY = 0;
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            if (!MyView.this.isStart){
-                preScrollX = e1.getX();
-                preScrollY = e1.getY();
-                isStart = true;
-            }
-            translateX += (e2.getX() - preScrollX)/3;
-            translateY += (e2.getY() - preScrollY)/3;
-            preScrollX = e2.getX();
-            preScrollY = e2.getY();
-            MyView.this.invalidate();
-            return true;
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            return false;
-        }
-
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return false;
-        }
-
-        @Override
-        public void onShowPress(MotionEvent e) {
-
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            return false;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-
-        }
-
-
     }
 
 
@@ -182,6 +134,7 @@ public class MyView extends View {
         super.onDraw(canvas);
         //用户拖拽地图进行平移
         canvas.translate(translateX,translateY);
+        canvas.scale(scale,scale);
         //绘制轨迹
         drawPath(canvas);
         //绘制箭头
@@ -243,8 +196,6 @@ public class MyView extends View {
         }
     }
 
-
-
     private void drawArrow(Canvas canvas) {
         canvas.save();
         canvas.translate(curX, curY); // 平移画布
@@ -263,23 +214,81 @@ public class MyView extends View {
     }
 
     public void bigger(){
-        if (scale>=1.5){
-            return;
-        }
-        scale += 0.2;
-        setScaleX(scale);
-        setScaleY(scale);
-        invalidate();
+
     }
 
     public void smaller(){
-        if (scale<=0.5){
-            return;
+
+    }
+
+
+    public class GestureListener implements GestureDetector.OnGestureListener{
+        private float preScrollX = 0;
+        private float preScrollY = 0;
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (!MyView.this.isStart){
+                preScrollX = e1.getX();
+                preScrollY = e1.getY();
+                isStart = true;
+            }
+            translateX += (e2.getX() - preScrollX)/3;
+            translateY += (e2.getY() - preScrollY)/3;
+            preScrollX = e2.getX();
+            preScrollY = e2.getY();
+            MyView.this.invalidate();
+            return true;
         }
-        scale -= 0.2;
-        setScaleX(scale);
-        setScaleY(scale);
-        invalidate();
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            return false;
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public void onShowPress(MotionEvent e) {
+
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+
+        }
+    }
+
+
+    public class ScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
+        private float preScale = 1;
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            // 前一个伸缩事件至当前伸缩事件的伸缩比率
+            float scaleFactor = detector.getScaleFactor();
+            Log.e("MyView scaleFactor",Float.toString(scaleFactor));
+            scale += (scaleFactor - preScale);
+            preScale = scaleFactor;
+            MyView.this.invalidate();
+            return false;
+        }
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+            preScale = 1;
+        }
     }
 
 

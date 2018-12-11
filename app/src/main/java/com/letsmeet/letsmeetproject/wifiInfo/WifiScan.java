@@ -108,6 +108,6 @@ public class WifiScan extends Thread{
 
     private void startWifiScan(){
         boolean scanResult =wifiManager.startScan(); //最好检查下返回值，因为这个方法可能会调用失败
-//        Log.e("MainActivity1","startScan()执行成功: " + scanResult);
+//        Log.e("MainActivity","startScan()执行成功: " + scanResult);
     }
 }

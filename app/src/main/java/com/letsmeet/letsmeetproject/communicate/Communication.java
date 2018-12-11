@@ -27,6 +27,7 @@ public class Communication {
 
     private String TAG = "Communication";
     private MyView otherView;
+
     public Communication(MyView otherView){
         this.otherView = otherView;
         initSocket();

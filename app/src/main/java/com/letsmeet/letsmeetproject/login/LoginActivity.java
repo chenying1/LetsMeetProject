@@ -27,7 +27,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.letsmeet.letsmeetproject.MainActivity1;
+import com.letsmeet.letsmeetproject.MainActivity;
 import com.letsmeet.letsmeetproject.R;
 
 import org.json.JSONObject;
@@ -226,7 +226,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             //将响应流转换成字符串
 //                            String result = inputStream.toString();//将流转换为字符串。
                             Log.e("kwwl","result============="+result);
-                            Intent intent = new Intent(LoginActivity.this, MainActivity1.class);
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                             context.startActivity(intent);
                         }
 

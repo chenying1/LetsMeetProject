@@ -33,7 +33,7 @@ import org.json.JSONObject;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity1 extends AppCompatActivity implements OrientCallback,StepDetectedCallback {
+public class MainActivity extends AppCompatActivity implements OrientCallback,StepDetectedCallback {
 
     private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
     private Context context = this;
