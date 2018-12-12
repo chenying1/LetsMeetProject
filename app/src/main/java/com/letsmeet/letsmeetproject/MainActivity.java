@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
+import com.letsmeet.letsmeetproject.gps.GpsInfo;
 import com.letsmeet.letsmeetproject.sensor.MySensorEventListener;
 import com.letsmeet.letsmeetproject.sensor.OrientCallback;
 import com.letsmeet.letsmeetproject.sensor.StepDetectedCallback;
@@ -37,11 +38,6 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
 
     private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
     private Context context = this;
-
-    //    private ImageView arrowImg;
-//    private ImageView otherArrowImg;
-//    private TextView orientationText;
-//    private TextView otherOrientText;
     private TextView stepDetector;
     private SensorManager sensorManager;
     private Communication communication;
@@ -56,8 +52,10 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
     private MyView myView;
     private MyView otherView;
 
-    private Button other_addbtn;
-    private Button other_subtractbtn;
+//    private Button other_addbtn;
+////    private Button other_subtractbtn;
+
+    private GpsInfo gpsInfo;
 
     private Handler handler=new Handler(){
         public void handleMessage(android.os.Message msg) {
@@ -85,17 +83,11 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
-        other_addbtn = (Button) findViewById(R.id.other_add_btn);
-        other_subtractbtn = (Button) findViewById(R.id.other_subtract_btn);
+//        other_addbtn = (Button) findViewById(R.id.other_add_btn);
+//        other_subtractbtn = (Button) findViewById(R.id.other_subtract_btn);
 
-
-//        arrowImg = (ImageView) findViewById(R.id.arrow_img);
-//        otherArrowImg = (ImageView) findViewById(R.id.other_arrow_img);
-//        orientationText = (TextView) findViewById(R.id.orientation);
-//        otherOrientText = (TextView) findViewById(R.id.other);
         stepDetector = (TextView) findViewById(R.id.stepDetector);
 
         myView = (MyView) findViewById(R.id.myView);
@@ -116,18 +108,7 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
 
         startOrient();
 
-        other_addbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                otherView.bigger();
-            }
-        });
-        other_subtractbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                otherView.smaller();
-            }
-        });
+        gpsInfo = new GpsInfo(context);
     }
 
 
