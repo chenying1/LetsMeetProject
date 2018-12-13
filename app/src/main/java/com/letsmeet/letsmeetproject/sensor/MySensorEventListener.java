@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class MySensorEventListener implements SensorEventListener {
     TimerTask task = null;
     double acValues = 0;
     int len = 50;
+    private final String TAG = "MySensorEventListener";
 
     public MySensorEventListener(Context context, OrientCallback orientCallback, StepDetectedCallback stepDetectedCallback){
         this.context = context;
@@ -53,12 +55,15 @@ public class MySensorEventListener implements SensorEventListener {
         Sensor stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
         //计步总数传感器
         Sensor stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);//获取计步总数传感器
+        //陀螺仪传感器
+        Sensor gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         //注册SensorEventListener使其生效
         sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, stepDetectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this, stepCounter, SensorManager.SENSOR_DELAY_UI);
+        sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
 
 
         task = new TimerTask() {
@@ -92,6 +97,28 @@ public class MySensorEventListener implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         //加速度和地磁场    步行检测
+        int sensorType = event.sensor.getType();
+        switch (sensorType){
+            case Sensor.TYPE_ACCELEROMETER:
+                accelerometerValues = event.values.clone();
+                double ac = Math.pow(accelerometerValues[0],2)+Math.pow(accelerometerValues[1],2)+Math.pow(accelerometerValues[2],2);
+                acValues = Math.pow(ac,0.5);
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                magneticValues = event.values.clone();
+                break;
+            case Sensor.TYPE_STEP_DETECTOR:
+                if (event.values[0]==1.0f){
+                    step_count++;
+                    stepDetectedCallback.stepDetected(step_count);
+//                Log.e("TAG","检测到一个步伐了");
+                }
+//            stepDetector.setText("步数:"+event.values[0]);
+                break;
+            case Sensor.TYPE_GYROSCOPE:
+//                Log.e(TAG,"陀螺仪的数据为："+"x:"+event.values[0]+",y:"+event.values[1]+",z:"+event.values[2]);
+                break;
+        }
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
             accelerometerValues = event.values.clone();
             double ac = Math.pow(accelerometerValues[0],2)+Math.pow(accelerometerValues[1],2)+Math.pow(accelerometerValues[2],2);

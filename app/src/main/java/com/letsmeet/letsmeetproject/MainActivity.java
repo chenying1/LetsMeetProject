@@ -230,11 +230,25 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
             return;
         }
 
-        String[] PERMS_INITIAL={Manifest.permission.ACCESS_FINE_LOCATION};
-        requestPermissions(PERMS_INITIAL,127);
+//        String[] PERMS_INITIAL={Manifest.permission.ACCESS_FINE_LOCATION};
+//        requestPermissions(PERMS_INITIAL,127);
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//        while (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            //判断是否需要向用户解释为什么需要申请该权限
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    Manifest.permission.ACCESS_COARSE_LOCATION)) {
+//                Toast.makeText(this, "自Android 6.0开始需要打开位置权限才可以搜索到WIFI设备", Toast.LENGTH_SHORT);
+//            }
+//            //请求权限
+//            ActivityCompat.requestPermissions(this,
+//                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+//                    REQUEST_CODE_ACCESS_COARSE_LOCATION);
+//        }
+        while (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                ||ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) {
             //判断是否需要向用户解释为什么需要申请该权限
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_COARSE_LOCATION)) {
@@ -242,10 +256,9 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
             }
             //请求权限
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                    REQUEST_CODE_ACCESS_COARSE_LOCATION);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
         }
-
     }
 
     /**
