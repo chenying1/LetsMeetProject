@@ -21,7 +21,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
+import com.letsmeet.letsmeetproject.gps.GpsCompare;
 import com.letsmeet.letsmeetproject.gps.GpsInfo;
+import com.letsmeet.letsmeetproject.gps.LocationCallback;
 import com.letsmeet.letsmeetproject.sensor.MySensorEventListener;
 import com.letsmeet.letsmeetproject.sensor.OrientCallback;
 import com.letsmeet.letsmeetproject.sensor.StepDetectedCallback;
@@ -34,13 +36,14 @@ import org.json.JSONObject;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity implements OrientCallback,StepDetectedCallback {
+public class MainActivity extends AppCompatActivity implements OrientCallback,StepDetectedCallback,LocationCallback {
 
     private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
     private Context context = this;
     private TextView stepDetector;
     private SensorManager sensorManager;
     private Communication communication;
+    private TextView navigateView;
 
     private float rotateDegree;
     private float lastReceiveDegree;
@@ -48,9 +51,17 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
     private  MySensorEventListener listener;
     private Timer orientSendTimer;
     private Timer orientReceiveTimer;
+    private Timer navigateTimer;
 
     private MyView myView;
     private MyView otherView;
+
+    private GpsCompare gpsCompare;
+
+    double longitude = 0;
+    double latitude = 0;
+    double longitude_other = 0;
+    double latitude_other = 0;
 
 //    private Button other_addbtn;
 ////    private Button other_subtractbtn;
@@ -74,7 +85,11 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
                     break;
                 case 1:
                     int stepCount = (int) msg.obj;
-                    stepDetector.setText("步数:"+stepCount);
+//                    stepDetector.setText("步数:"+stepCount);
+                    break;
+                case 2:   //更新导航提示
+                    String string = (String) msg.obj;
+                    navigateView.setText("目标在:"+string);
                     break;
             }
         };
@@ -88,10 +103,12 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
 //        other_addbtn = (Button) findViewById(R.id.other_add_btn);
 //        other_subtractbtn = (Button) findViewById(R.id.other_subtract_btn);
 
-        stepDetector = (TextView) findViewById(R.id.stepDetector);
+//        stepDetector = (TextView) findViewById(R.id.stepDetector);
 
         myView = (MyView) findViewById(R.id.myView);
         otherView = (MyView) findViewById(R.id.otherView);
+
+        navigateView = (TextView) findViewById(R.id.navigation);
 
         myView.setArrowColor(getResources().getColor(R.color.deepblue));
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -108,7 +125,10 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
 
         startOrient();
 
-        gpsInfo = new GpsInfo(context);
+        gpsInfo = new GpsInfo(context,communication);
+        gpsCompare = new GpsCompare();
+
+        startNavigate();
     }
 
 
@@ -122,8 +142,7 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
         JSONObject jsonObject = new JSONObject();
         JSONObject data = new JSONObject();
         try {
-            jsonObject.put("status",2);
-
+            jsonObject.put("status",Config.STATUS_STEP_DETECT);
             data.put("curX",myView.getCurX());
             data.put("curY",myView.getCurY());
             jsonObject.put("data",data);
@@ -133,16 +152,27 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
         communication.send(jsonObject.toString());
     }
 
+    //发送加速度
+    //此方法用于测试，之后可能删除
     @Override
     public void stepDetected(String string) {
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("status",3);
+            jsonObject.put("status",Config.STATUS_ACCELERATE);
             jsonObject.put("data",string);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         communication.send(jsonObject.toString());
+    }
+
+    /**
+     * 导航提醒回调，当位置发生变化时
+     * @param navigation
+     */
+    @Override
+    public void navigationCallback(String navigation) {
+
     }
 
     /**
@@ -164,6 +194,37 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
         myView.orientChanged(orient);
     }
 
+    private void startNavigate(){
+        navigateTimer = new Timer();
+        TimerTask navigateTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (gpsChanged(longitude,gpsInfo.longitude)||
+                        gpsChanged(latitude,gpsInfo.latitude)||
+                        gpsChanged(longitude_other,Communication.receiveLongitude)||
+                        gpsChanged(latitude_other,Communication.receiveLatitude)){
+                    longitude = gpsInfo.longitude;
+                    latitude = gpsInfo.latitude;
+                    longitude_other = Communication.receiveLongitude;
+                    latitude_other = Communication.receiveLatitude;
+                    String navigateString = gpsCompare.compareBtoA(longitude,latitude,longitude_other,latitude_other);
+                    if (navigateString!=null){
+                        handler.obtainMessage(2,navigateString).sendToTarget();
+                    }
+                }
+            }
+        };
+        navigateTimer.schedule(navigateTask,0,3000);
+    }
+
+    private boolean gpsChanged(double lastNum, double newNum){
+        if (Math.abs(lastNum-newNum)>0.00001){
+            return true;
+        }
+        return false;
+    }
+
+
     /**
      * 开始发数据、收数据
      */
@@ -172,30 +233,26 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
         orientReceiveTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Float now = Float.parseFloat(Communication.receive);
+                Float now = Float.parseFloat(Communication.receiveOrient);
                 if (Math.abs(lastReceiveDegree - now)>1){
 //                    handler.obtainMessage(0,Float.toString(now)).sendToTarget();
                     otherView.orientChanged(now);
                     lastReceiveDegree = now;
                 }
-
                 int stepCountNew = Communication.otherStepCount;
-
-
             }
         }, Config.delay, Config.period);
 
-        //定时器每隔1s发数据
+        //定时器每隔1s发数据 角度
         orientSendTimer.schedule(new TimerTask() {
             float lastRotateDegree = 0;
             public void run() {
                 if (Math.abs(rotateDegree - lastRotateDegree) > 1){
                     lastRotateDegree = rotateDegree;
                     JSONObject sendString = new JSONObject();
-                    int status = 0;
                     String data = Float.toString(rotateDegree);
                     try {
-                        sendString.put("status",status);
+                        sendString.put("status",Config.STATUS_ORIENT);
                         sendString.put("data",data);
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -226,25 +283,9 @@ public class MainActivity extends AppCompatActivity implements OrientCallback,St
      * 获取wifi列表必须获得位置权限
      */
     public void requestLocationPermission(){
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {//如果 API level 是小于等于 23(Android 6.0) 时 不需要申请权限
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {//如果 API level 是小于等于 23(Android 6.0) 时 不需要显式申请权限
             return;
         }
-
-//        String[] PERMS_INITIAL={Manifest.permission.ACCESS_FINE_LOCATION};
-//        requestPermissions(PERMS_INITIAL,127);
-
-//        while (ContextCompat.checkSelfPermission(this,
-//                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            //判断是否需要向用户解释为什么需要申请该权限
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-//                    Manifest.permission.ACCESS_COARSE_LOCATION)) {
-//                Toast.makeText(this, "自Android 6.0开始需要打开位置权限才可以搜索到WIFI设备", Toast.LENGTH_SHORT);
-//            }
-//            //请求权限
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-//                    REQUEST_CODE_ACCESS_COARSE_LOCATION);
-//        }
         while (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 ||ContextCompat.checkSelfPermission(this,

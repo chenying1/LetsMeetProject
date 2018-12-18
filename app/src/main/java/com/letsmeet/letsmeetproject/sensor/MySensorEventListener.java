@@ -69,7 +69,7 @@ public class MySensorEventListener implements SensorEventListener {
         task = new TimerTask() {
             @Override
             public void run() {
-                //加速度
+                //发送加速度
                 if (acValues>0) {
                     list.add((float) acValues);
                     if (list.size()>=len*2) {

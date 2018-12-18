@@ -1,6 +1,7 @@
 package com.letsmeet.letsmeetproject.communicate;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.letsmeet.letsmeetproject.MyView;
 import com.letsmeet.letsmeetproject.setting.Config;
@@ -21,9 +22,10 @@ public class Communication {
     private boolean isSendMsgReady;
     public BufferedReader mReader;
     private BufferedWriter mWriter;
-    public static String receive = "0.0";
+    public static String receiveOrient = "0.0";
     public static int otherStepCount = 0;
-//    private Boolean is
+    public static double receiveLongitude;
+    public static double receiveLatitude;
 
     private String TAG = "Communication";
     private MyView otherView;
@@ -54,7 +56,7 @@ public class Communication {
         if (msg==null||msg.length()==0||(!isSendMsgReady)){
             return;
         }
-//        Log.e(TAG,msg);
+        Log.e(TAG,"send:"+msg);
         try {
             //通过BufferedWriter对象向服务器写数据
             mWriter.write(msg+"\n");
@@ -110,11 +112,11 @@ public class Communication {
                     while (true){
                         if (isReceivingMsgReady&&mReader.ready()) {
                             JSONObject receiveMsg = new JSONObject(mReader.readLine());
-//                            Log.e("receiveMsg:",receiveMsg.toString());
+                            Log.e("receiveMsg:",receiveMsg.toString());
                             int status = (int)receiveMsg.get("status");
                             switch (status) {
                                 case 0:
-                                    receive = (String)receiveMsg.get("data");
+                                    receiveOrient = (String)receiveMsg.get("data");
                                     break;
                                 case 2:
 //                                    Log.e("TAG","对方步伐有更新。");
@@ -124,11 +126,14 @@ public class Communication {
                                     double y = (double) coordinate.get("curY");
                                     otherView.autoAddStep((float) x,(float)y);
                                     break;
+                                case 4:
+                                    Log.e("TAG","对方Location更新");
+                                    JSONObject location = (JSONObject) receiveMsg.get("data");
+                                    receiveLongitude = location.getDouble("longitude");
+                                    receiveLatitude = location.getDouble("latitude");
+                                    Log.e("TAG","longitude_other:"+receiveLongitude);
+                                    Log.e("TAG","latitude_other:"+receiveLongitude);
                             }
-//                            if ( == 0){
-//                                // 状态码为0，表示对方的角度值
-//
-//                            }
                         }
                         Thread.sleep(1000);
                     }

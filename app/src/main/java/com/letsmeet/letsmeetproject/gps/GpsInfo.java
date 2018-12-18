@@ -12,6 +12,12 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.letsmeet.letsmeetproject.communicate.Communication;
+import com.letsmeet.letsmeetproject.setting.Config;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,11 +29,17 @@ public class GpsInfo {
 
     private LocationListener locationListener;
     private Location location;  //位置信息
+    public double longitude;
+    public double latitude;
     private List<GpsSatellite> satelliteList = new ArrayList<>(); // 卫星信息
     private static final String TAG = "GpsInfo";
+    private Communication communication;
+    private GpsCompare gpsCompare;
 
-    public GpsInfo(Context context){
+    public GpsInfo(Context context, Communication communication){
         this.context = context;
+        this.communication = communication;
+        gpsCompare = new GpsCompare();
         init();
     }
 
@@ -40,6 +52,7 @@ public class GpsInfo {
         locationListener = new MyLocationListener();
         updateLocation(location);
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 8, locationListener);
+        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,3000,8,locationListener);
         lm.addGpsStatusListener(statusListener);
     }
 
@@ -47,10 +60,22 @@ public class GpsInfo {
     private void updateLocation(Location newLocation){
         if (newLocation!=null){
            this.location = newLocation;
+           this.longitude = location.getLongitude();
+           this.latitude = location.getLatitude();
+            JSONObject sendMsg = new JSONObject();
+            JSONObject data = new JSONObject();
+            try {
+                sendMsg.put("status",Config.STATUS_LOCATION);
+                data.put("longitude",this.longitude);
+                data.put("latitude",this.latitude);
+                sendMsg.put("data",data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+           communication.send(sendMsg.toString());
            Log.e(TAG,"经度:"+location.getLatitude());
             Log.e(TAG,"纬度:"+location.getLongitude());
-            Log.e(TAG,"高度:"+location.getAltitude());
-            Log.e(TAG,"方向:"+location.getBearing());
+              Log.e(TAG,"方向:"+location.getBearing());
             Log.e(TAG,"速度:"+location.getSpeed());
         }
     }
@@ -66,7 +91,7 @@ public class GpsInfo {
             int index = 0;
             while (it.hasNext() && index <= maxSatellites) {
                 GpsSatellite s = it.next();
-                if (s.getSnr() != 0)//只有信躁比不为0的时候才算搜到了卫星
+                if (s.getSnr() != 0)//去掉信躁比为0的卫星
                 {
                     satelliteList.add(s);
                 }
@@ -81,7 +106,7 @@ public class GpsInfo {
     /**
      * 卫星状态监听器
      */
-    private final GpsStatus.Listener statusListener = new GpsStatus.Listener() {
+    private GpsStatus.Listener statusListener = new GpsStatus.Listener() {
         // GPS状态变化时的回调，如卫星数发生改变
         public void onGpsStatusChanged(int event) {
             GpsStatus status = null;
@@ -93,7 +118,9 @@ public class GpsInfo {
         }
     };
 
-
+    /**
+     * 位置监听器
+     */
     class MyLocationListener implements LocationListener{
         @Override
         public void onLocationChanged(Location location) {

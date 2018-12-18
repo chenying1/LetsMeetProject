@@ -124,7 +124,6 @@ public class MyView extends View {
         }
         gestureDetector.onTouchEvent(event);
         scaleGestureDetector.onTouchEvent(event);
-
         return true;
     }
 
@@ -222,7 +221,7 @@ public class MyView extends View {
     }
 
 
-    public class GestureListener implements GestureDetector.OnGestureListener{
+    private class GestureListener implements GestureDetector.OnGestureListener{
         private float preScrollX = 0;
         private float preScrollY = 0;
         @Override
@@ -267,7 +266,7 @@ public class MyView extends View {
     }
 
 
-    public class ScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
+    private class ScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
         private float preScale = 1;
         @Override
         public boolean onScale(ScaleGestureDetector detector) {

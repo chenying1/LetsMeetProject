@@ -6,6 +6,9 @@
     <color name="deepblue">#1E90FF</color> <!--蓝色 -->
 
     <color name="red">#FF6347</color> <!--红色 -->
-    <color name="grey">#C0C0C0</color> <!--灰色 -->
+
+    <color name="white">#eeffffff</color>
+    <color name="grey">#90808080</color> <!-- 灰色 设置了透明度 -->
+
 
 </resources>

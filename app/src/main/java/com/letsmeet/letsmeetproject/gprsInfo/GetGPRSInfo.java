@@ -62,9 +62,9 @@ public class GetGPRSInfo {
             infos = mTelephonyManager.getAllCellInfo();
         }
 
-        StringBuffer sb = new StringBuffer("邻区基站总数 : " + infos.size() + "\n");
+        StringBuffer sb = new StringBuffer("基站总数 : " + infos.size() + "\n");
 
-        for (CellInfo info1 : infos) { // 根据邻区总数进行循环
+        for (CellInfo info1 : infos) {
 
             if (info1 instanceof CellInfoLte){
                 CellInfoLte info = (CellInfoLte) info1;
