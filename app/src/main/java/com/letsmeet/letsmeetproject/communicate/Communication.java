@@ -24,8 +24,8 @@ public class Communication {
     private BufferedWriter mWriter;
     public static String receiveOrient = "0.0";
     public static int otherStepCount = 0;
-    public static double receiveLongitude;
-    public static double receiveLatitude;
+    public double receiveLongitude;
+    public double receiveLatitude;
 
     private String TAG = "Communication";
     private MyView otherView;

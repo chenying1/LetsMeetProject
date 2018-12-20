@@ -2,12 +2,6 @@ package com.letsmeet.letsmeetproject.gps;
 
 public class GpsCompare {
 
-    private static double longitude;
-    private static double latitude;
-
-    public static double otherLongitude;
-    public static double otherLatitude;
-
     private boolean isEqual(double f1, double f2){
         if (Math.abs(f1-f2)<0.001){
             return true;

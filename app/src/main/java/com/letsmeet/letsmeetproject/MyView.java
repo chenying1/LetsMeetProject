@@ -16,8 +16,6 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MyView extends View {
 
@@ -62,6 +60,7 @@ public class MyView extends View {
         init();
     }
 
+    //设置画笔的颜色
     public void setPaintColor(int color) {
         arrowPaint2.setColor(color);
         invalidate();
@@ -140,6 +139,7 @@ public class MyView extends View {
         drawArrow(canvas);
     }
 
+    //自身移动时，根据检测到的步数，向前移动一步
     public void autoAddStep(){
         //贝塞尔曲线
         curX += (float) (stepLen * Math.sin(Math.toRadians(degree)));
@@ -152,6 +152,7 @@ public class MyView extends View {
         postInvalidate();
     }
 
+    //对方移动时，根据服务器发送的坐标，绘制
     public void autoAddStep(float curX, float curY){
         //贝塞尔曲线
         setCurX(curX);
@@ -159,7 +160,7 @@ public class MyView extends View {
         path.quadTo(preX,preY,curX,curY);
         pointFS.add(new PointF(curX, curY));
         setPreX(curX);
-        setCurY(curY);
+        setPreY(curY);
         //重绘
         postInvalidate();
     }
@@ -188,6 +189,7 @@ public class MyView extends View {
         return curY;
     }
 
+    //箭头方向改变重绘
     public void orientChanged(float degreeNew){
         if (Math.abs(degreeNew-degree)>1) {
             this.degree = degreeNew;
@@ -195,6 +197,7 @@ public class MyView extends View {
         }
     }
 
+    //绘制箭头
     private void drawArrow(Canvas canvas) {
         canvas.save();
         canvas.translate(curX, curY); // 平移画布
@@ -206,21 +209,16 @@ public class MyView extends View {
         canvas.restore(); // 恢复画布
     }
 
+    //绘制路径
     private void drawPath(Canvas canvas){
         for (PointF p : pointFS) {
             canvas.drawCircle(p.x, p.y, cR, pathPaint);
         }
     }
 
-    public void bigger(){
-
-    }
-
-    public void smaller(){
-
-    }
-
-
+    /**
+     * 实现界面的滑动平移
+     */
     private class GestureListener implements GestureDetector.OnGestureListener{
         private float preScrollX = 0;
         private float preScrollY = 0;
@@ -265,7 +263,9 @@ public class MyView extends View {
         }
     }
 
-
+    /**
+     * 实现界面的放缩
+     */
     private class ScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
         private float preScale = 1;
         @Override

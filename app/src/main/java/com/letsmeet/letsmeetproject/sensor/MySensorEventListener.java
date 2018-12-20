@@ -5,40 +5,25 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import com.letsmeet.letsmeetproject.MyView;
 
 public class MySensorEventListener implements SensorEventListener {
-
-    float[] accelerometerValues = new float[3];
-    float[] magneticValues = new float[3];
-    int step_count = 0;
-    SensorManager sensorManager;
-    Context context;
-    float rotateDegree = 0;
-    float lastRotateDegree = 0;
-    OrientCallback orientCallback;
-    StepDetectedCallback stepDetectedCallback;
-    List<Float> list = new ArrayList<>();
-    Timer accelerTimer = new Timer();
-    TimerTask task = null;
+    private float[] accelerometerValues = new float[3];
+    private float[] magneticValues = new float[3];
+    private SensorManager sensorManager;
+    private Context context;
+    public float rotateDegree = 0;
+    private float lastRotateDegree = 0;
     double acValues = 0;
-    int len = 50;
+    long timestamp;
+    public Crest crest = new Crest();  //加速度传感器当前的值
     private final String TAG = "MySensorEventListener";
+    private MyView myView;
 
-    public MySensorEventListener(Context context, OrientCallback orientCallback, StepDetectedCallback stepDetectedCallback){
+    public MySensorEventListener(Context context, MyView myView){
         this.context = context;
-        this.orientCallback = orientCallback;
-        this.stepDetectedCallback = stepDetectedCallback;
-    }
-
-    public MySensorEventListener(Context context, OrientCallback orientCallback){
-        this.context = context;
-        this.orientCallback = orientCallback;
+        this.myView = myView;
     }
 
     /**
@@ -64,22 +49,6 @@ public class MySensorEventListener implements SensorEventListener {
         sensorManager.registerListener(this, stepDetectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this, stepCounter, SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
-
-
-        task = new TimerTask() {
-            @Override
-            public void run() {
-                //发送加速度
-                if (acValues>0) {
-                    list.add((float) acValues);
-                    if (list.size()>=len*2) {
-                        len = list.size();
-                        stepDetectedCallback.stepDetected(list.toString());
-                    }
-                }
-            }
-        };
-        accelerTimer.schedule(task,0,50);
     }
 
 
@@ -101,48 +70,36 @@ public class MySensorEventListener implements SensorEventListener {
         switch (sensorType){
             case Sensor.TYPE_ACCELEROMETER:
                 accelerometerValues = event.values.clone();
+                timestamp = event.timestamp;
                 double ac = Math.pow(accelerometerValues[0],2)+Math.pow(accelerometerValues[1],2)+Math.pow(accelerometerValues[2],2);
                 acValues = Math.pow(ac,0.5);
+                crest.setValue(acValues);
+                crest.setTimestamp(timestamp);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 magneticValues = event.values.clone();
                 break;
             case Sensor.TYPE_STEP_DETECTOR:
-                if (event.values[0]==1.0f){
-                    step_count++;
-                    stepDetectedCallback.stepDetected(step_count);
-//                Log.e("TAG","检测到一个步伐了");
-                }
-//            stepDetector.setText("步数:"+event.values[0]);
+                //计步检测  Android自带的计步检测传感器，由于不灵敏，本项目中不再使用
                 break;
             case Sensor.TYPE_GYROSCOPE:
+                //陀螺仪传感器的数据  后期可能要用上
 //                Log.e(TAG,"陀螺仪的数据为："+"x:"+event.values[0]+",y:"+event.values[1]+",z:"+event.values[2]);
                 break;
         }
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            accelerometerValues = event.values.clone();
-            double ac = Math.pow(accelerometerValues[0],2)+Math.pow(accelerometerValues[1],2)+Math.pow(accelerometerValues[2],2);
-            acValues = Math.pow(ac,0.5);
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
-            magneticValues = event.values.clone();
-        } else if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR){
-            if (event.values[0]==1.0f){
-                step_count++;
-                stepDetectedCallback.stepDetected(step_count);
-//                Log.e("TAG","检测到一个步伐了");
-            }
-//            stepDetector.setText("步数:"+event.values[0]);
-        }
+        calculateDegree();
+    }
 
+    private void calculateDegree(){
+        //计算手机朝向
         float[] R = new float[9];
         float[] values = new float[3];
         SensorManager.getRotationMatrix(R, null, accelerometerValues, magneticValues);
         SensorManager.getOrientation(R, values);
         //获取手机朝向的角度
         rotateDegree = (float) Math.toDegrees(values[0]);
-
         if (isOrientChange()) {
-            orientCallback.orient(rotateDegree, lastRotateDegree);
+            myView.orientChanged(rotateDegree);
             lastRotateDegree = rotateDegree;
         }
     }

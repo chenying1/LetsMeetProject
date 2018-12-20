@@ -8,6 +8,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
+import com.letsmeet.letsmeetproject.setting.Config;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +26,6 @@ public class WifiScan extends Thread{
     private Context context;
     private Communication communication;
     private HashMap<String,Integer> hashMap;
-    private int status_wifiinfo = 1;
 
     private BroadcastReceiver mReceiver;
 
@@ -62,7 +62,7 @@ public class WifiScan extends Thread{
                     if (results !=null) {
                         JSONObject sendString = new JSONObject();
                         try {
-                            sendString.put("status",status_wifiinfo);
+                            sendString.put("status",Config.STATUS_WIFI);
                             Set<String> set = new HashSet<>();
                             for (ScanResult scanResult : results) {
 //                                JSONObject msg = new JSONObject();
