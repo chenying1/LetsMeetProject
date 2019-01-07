@@ -122,7 +122,7 @@ public class StepDetector {
             //去除波峰的时间间隔小于200ms的
             curTime = highlist.get(i).timestamp;
             lastTime = highlist.get(lastIndex).timestamp;
-            if (curTime - lastTime<200){
+            if (curTime - lastTime<200000000){
                 if (highlist.get(lastIndex).value<=highlist.get(i).value){
                     highlist.set(lastIndex,null);
                     lastIndex = i;
@@ -144,6 +144,12 @@ public class StepDetector {
             if (str==null) {
                 ite.remove();
             }
+        }
+    }
+
+    public void timerCancel(){
+        if (timer!=null){
+            timer.cancel();
         }
     }
 }

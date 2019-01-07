@@ -83,4 +83,12 @@ public class OrientDetector {
         }
     }
 
+    public void timerCancel(){
+        if (orientSendTimer!=null){
+            orientSendTimer.cancel();
+        }
+        if (orientReceiveTimer!=null){
+            orientReceiveTimer.cancel();
+        }
+    }
 }

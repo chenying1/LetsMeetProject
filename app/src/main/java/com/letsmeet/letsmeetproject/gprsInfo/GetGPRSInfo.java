@@ -72,8 +72,10 @@ public class GetGPRSInfo {
                 CellSignalStrengthLte cellSignalStrengthLte = info.getCellSignalStrength();
 
                 sb.append(" 基站信息 : " ); // 取出当前邻区的LAC
+                sb.append("\ncellID:"+cellIdentity.getCi());
                 sb.append("\ndbm:"+ cellSignalStrengthLte.getDbm());
                 sb.append("\nlevel:"+cellSignalStrengthLte.getLevel());
+
 
             }
 

@@ -24,11 +24,10 @@ import java.util.List;
 
 public class GpsInfo {
     private Context context;
-
     private LocationManager lm;
-
     private LocationListener locationListener;
-    private Location location;  //位置信息
+    public Location location;  //位置信息
+    public ArrayList<Float> satelliteSnr = new ArrayList<>();//卫星信噪比
     public double longitude;
     public double latitude;
     private List<GpsSatellite> satelliteList = new ArrayList<>(); // 卫星信息
@@ -99,7 +98,9 @@ public class GpsInfo {
             }
         }
         Log.e(TAG, "卫星个数:" + satelliteList.size());
+        satelliteSnr.clear();
         for (int i = 0; i < satelliteList.size(); i++) {
+            satelliteSnr.add(satelliteList.get(i).getSnr());
             Log.e(TAG, "卫星信噪比:" + satelliteList.get(i).getSnr());
         }
     }

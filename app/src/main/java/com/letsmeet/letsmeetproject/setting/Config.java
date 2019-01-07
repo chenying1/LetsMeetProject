@@ -5,6 +5,7 @@ public class Config {
     public static final String SERVER_IP = "222.20.73.169";
 //    public static final String SERVER_IP = "39.105.206.148";
     public static final int SERVER_PORT = 1234;
+    public static final int SERVER_PORT_SENDALLDATA = 1233;
 
     //定时器周期ms
     public static final int period = 1000;

@@ -10,13 +10,15 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class Communication {
-
     private Socket clientSocket;
     private boolean isReceivingMsgReady;
     private boolean isSendMsgReady;
@@ -27,8 +29,13 @@ public class Communication {
     public double receiveLongitude;
     public double receiveLatitude;
 
+    public ArrayList<String> otherWifilist;
+
     private String TAG = "Communication";
     private MyView otherView;
+
+    private String ip= Config.SERVER_IP;
+    private int port=Config.SERVER_PORT;
 
     public Communication(MyView otherView){
         this.otherView = otherView;
@@ -80,8 +87,6 @@ public class Communication {
         @Override
         public void run() {
             try {
-                String ip= Config.SERVER_IP;
-                int port=Config.SERVER_PORT;
                 clientSocket=new Socket(ip,port);
                 //从输入流中获取数据
                 mReader=new BufferedReader(new InputStreamReader(clientSocket.getInputStream(),"utf-8"));
@@ -90,6 +95,7 @@ public class Communication {
                 mWriter=new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(),"utf-8"));
                 isSendMsgReady = true;
 //                Log.e(TAG,"连接服务器成功");
+                otherWifilist = new ArrayList<>();
                 receiveMsg();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -115,10 +121,14 @@ public class Communication {
                             Log.e("receiveMsg:",receiveMsg.toString());
                             int status = (int)receiveMsg.get("status");
                             switch (status) {
-                                case 0:
+                                case 0:  //对方方向更新
                                     receiveOrient = (String)receiveMsg.get("data");
                                     break;
-                                case 2:
+                                case 1:   //对方发送的wifi数据
+                                    String recvString = (String)receiveMsg.get("data");
+                                    otherWifilist = (ArrayList<String>) deserializeToObject(recvString);
+                                    break;
+                                case 2:  //对方轨迹更新
 //                                    Log.e("TAG","对方步伐有更新。");
                                     otherStepCount++;
                                     JSONObject coordinate = (JSONObject)receiveMsg.get("data");;
@@ -126,7 +136,7 @@ public class Communication {
                                     double y = (double) coordinate.get("curY");
                                     otherView.autoAddStep((float) x,(float)y);
                                     break;
-                                case 4:
+                                case 4:    //对方GPS位置更新
                                     Log.e("TAG","对方Location更新");
                                     JSONObject location = (JSONObject) receiveMsg.get("data");
                                     receiveLongitude = location.getDouble("longitude");
@@ -143,6 +153,14 @@ public class Communication {
 
             }
         }).start();
+    }
+
+    //字符串 反序列化
+    private Object deserializeToObject(String str) throws Exception{
+        ByteArrayInputStream byteIn = new ByteArrayInputStream(str.getBytes("ISO-8859-1"));
+        ObjectInputStream objIn = new ObjectInputStream(byteIn);
+        Object obj =objIn.readObject();
+        return obj;
     }
 
     public void closeCommunication(){

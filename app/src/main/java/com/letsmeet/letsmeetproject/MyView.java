@@ -14,8 +14,8 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MyView extends View {
 
@@ -25,7 +25,7 @@ public class MyView extends View {
     public Paint arrowPaint2;
 
     private Path path;  //轨迹
-    private List<PointF> pointFS = new ArrayList<>();
+    private List<PointF> pointFS = new CopyOnWriteArrayList<>();
     private int cR = 5; // 圆点半径
     private Paint pathPaint; //画轨迹的画笔
 

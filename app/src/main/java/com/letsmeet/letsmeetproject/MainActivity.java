@@ -3,35 +3,37 @@ package com.letsmeet.letsmeetproject;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
 import com.letsmeet.letsmeetproject.gps.LocationDetector;
+import com.letsmeet.letsmeetproject.sendAllData.SendAllData;
 import com.letsmeet.letsmeetproject.sensor.MySensorEventListener;
 import com.letsmeet.letsmeetproject.sensor.OrientDetector;
 import com.letsmeet.letsmeetproject.sensor.StepDetector;
+import com.letsmeet.letsmeetproject.setting.SystemUtil;
 import com.letsmeet.letsmeetproject.wifiInfo.WifiScan;
 
 public class MainActivity extends AppCompatActivity {
-
     private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
     private Context context = this;
     private Communication communication;
     private TextView navigateView;
-
     private  MySensorEventListener listener;
-
     private MyView myView;
     private MyView otherView;
 
+    private LocationView locationView;
+    private WifiScan wifiScan;
+    private LocationDetector locationDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,15 +43,20 @@ public class MainActivity extends AppCompatActivity {
         myView = (MyView) findViewById(R.id.myView);
         otherView = (MyView) findViewById(R.id.otherView);
         navigateView = (TextView) findViewById(R.id.navigation);
+
+        locationView = (LocationView) findViewById(R.id.locationView);
+
         myView.setArrowColor(getResources().getColor(R.color.deepblue));
         listener = new MySensorEventListener(this,myView);
         listener.registerSensor();
         communication = new Communication(otherView);
         requestLocationPermission();
         startScan(context);
-        new LocationDetector(context,navigateView,communication);
+        locationDetector = new LocationDetector(context,navigateView,communication,wifiScan,locationView);
         new OrientDetector(myView,otherView,listener,communication);
         new StepDetector(listener,myView,communication);
+        Log.e("SystemUtil",SystemUtil.getSystemModel()+" "+SystemUtil.getSystemVersion());
+        SendAllData sendAllData = new SendAllData(listener,locationDetector.getGpsInfo(),wifiScan);
     }
 
     @Override
@@ -93,7 +100,10 @@ public class MainActivity extends AppCompatActivity {
             // 未打开位置开关，可能导致定位失败或定位不准，提示用户或做相应处理
             Toast.makeText(context,"未打开GPS,可能无法扫描wifi", Toast.LENGTH_SHORT).show();
         }
-        new WifiScan(context,communication).start();
+        wifiScan = new WifiScan(context,communication);
+        //开启wifiscan的扫描线程，每隔一段时间扫描一次
+        wifiScan.start();
+//        new WifiScan(context,communication).start();
     }
 }
 

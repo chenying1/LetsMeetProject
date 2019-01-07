@@ -9,14 +9,18 @@ import android.hardware.SensorManager;
 import com.letsmeet.letsmeetproject.MyView;
 
 public class MySensorEventListener implements SensorEventListener {
-    private float[] accelerometerValues = new float[3];
-    private float[] magneticValues = new float[3];
+    public float[] accelerometerValues = new float[3];
+    public float[] magneticValues = new float[3];
+    public float[] gyroscopeValues = new float[3];
+    public float pressure;
+    public float[] angleValues = new float[3];
+
     private SensorManager sensorManager;
     private Context context;
     public float rotateDegree = 0;
     private float lastRotateDegree = 0;
-    double acValues = 0;
-    long timestamp;
+    private double acValues = 0;
+    private long timestamp;
     public Crest crest = new Crest();  //加速度传感器当前的值
     private final String TAG = "MySensorEventListener";
     private MyView myView;
@@ -42,6 +46,8 @@ public class MySensorEventListener implements SensorEventListener {
         Sensor stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);//获取计步总数传感器
         //陀螺仪传感器
         Sensor gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        //气压计
+        Sensor pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 
         //注册SensorEventListener使其生效
         sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_UI);
@@ -49,6 +55,7 @@ public class MySensorEventListener implements SensorEventListener {
         sensorManager.registerListener(this, stepDetectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this, stepCounter, SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
+        sensorManager.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_UI);
     }
 
 
@@ -80,11 +87,15 @@ public class MySensorEventListener implements SensorEventListener {
                 magneticValues = event.values.clone();
                 break;
             case Sensor.TYPE_STEP_DETECTOR:
-                //计步检测  Android自带的计步检测传感器，由于不灵敏，本项目中不再使用
+                //计步检测  Android自带的计步检测传感器，由于不灵敏，
                 break;
             case Sensor.TYPE_GYROSCOPE:
                 //陀螺仪传感器的数据  后期可能要用上
-//                Log.e(TAG,"陀螺仪的数据为："+"x:"+event.values[0]+",y:"+event.values[1]+",z:"+event.values[2]);
+                gyroscopeValues = event.values.clone();
+//                Log.e(TAG,"陀螺仪的数据为："  +"x:"+event.values[0]+",y:"+event.values[1]+",z:"+event.values[2]);
+                break;
+            case Sensor.TYPE_PRESSURE:
+                pressure = event.values[0];
                 break;
         }
         calculateDegree();
@@ -96,6 +107,7 @@ public class MySensorEventListener implements SensorEventListener {
         float[] values = new float[3];
         SensorManager.getRotationMatrix(R, null, accelerometerValues, magneticValues);
         SensorManager.getOrientation(R, values);
+        angleValues = values.clone();
         //获取手机朝向的角度
         rotateDegree = (float) Math.toDegrees(values[0]);
         if (isOrientChange()) {
