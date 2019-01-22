@@ -60,12 +60,6 @@ public class MyView extends View {
         init();
     }
 
-    //设置画笔的颜色
-    public void setPaintColor(int color) {
-        arrowPaint2.setColor(color);
-        invalidate();
-    }
-
     private void init(){
         path = new Path();
         // 初始化箭头路径
@@ -214,6 +208,20 @@ public class MyView extends View {
         for (PointF p : pointFS) {
             canvas.drawCircle(p.x, p.y, cR, pathPaint);
         }
+    }
+
+    /*
+        清屏
+     */
+    public void viewClear(){
+        pointFS.clear();
+//        curX = centerX;
+//        curY = centerY;
+//        preX = curX;
+//        preY = curY;
+//        translateX = 0;
+//        translateY = 0;
+        postInvalidate();
     }
 
     /**

@@ -1,6 +1,8 @@
 package com.letsmeet.letsmeetproject.sendAllData;
 
-import com.letsmeet.letsmeetproject.setting.Config;
+import android.util.Log;
+
+import com.letsmeet.letsmeetproject.util.Config;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -30,6 +32,7 @@ public class SendClient {
         try {
             mWriter.write(msg+"\n");
             mWriter.flush();
+            Log.e(TAG,msg);
         } catch (IOException e) {
             isSendMsgReady = false;
             initSocket();
@@ -49,8 +52,10 @@ public class SendClient {
                 clientSocket=new Socket(ip,port);
                 mWriter=new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(),"utf-8"));
                 isSendMsgReady = true;
+                Log.e(TAG,"连接服务器成功");
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.e(TAG,"连接服务器失败");
                 try { //若连接服务器失败，则每4s重新连接
                     Thread.sleep(4000);
                 } catch (InterruptedException e1) {

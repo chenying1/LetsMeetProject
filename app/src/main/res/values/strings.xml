@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">LetsMeetProject</string>
-    <string name="title_activity_login">Sign in</string>
+    <string name="app_name">LetsMeet</string>
+    <string name="title_activity_login">登录hh</string>
     <!-- Strings related to login -->
     <string name="prompt_email">用户名</string>
     <string name="prompt_password">密码</string>
@@ -14,4 +14,44 @@
         completions."
     </string>
     <string name="title_activity_login2">Sign in</string>
+
+    <string-array name="parameter">
+        <item>加速度</item>
+        <item>地磁场</item>
+        <item>方位角</item>
+        <item>陀螺仪</item>
+        <item>压力计</item>
+        <item>光强度</item>
+        <item>GPS</item>
+        <item>卫星</item>
+        <item>WiFi</item>
+    </string-array>
+
+    <string-array name="parameter_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+
+    <string-array name="frequency">
+        <item>5 Hz</item>
+        <item>10 Hz</item>
+        <item>15 Hz</item>
+        <item>20 Hz</item>
+        <item>25 Hz</item>
+    </string-array>
+    <string-array name="frequency_values">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+    </string-array>
+
 </resources>

@@ -4,13 +4,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Location;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
-import com.letsmeet.letsmeetproject.setting.Config;
+import com.letsmeet.letsmeetproject.util.Config;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,9 +17,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static android.content.Context.WIFI_SERVICE;
 
@@ -92,6 +89,10 @@ public class WifiScan extends Thread{
 
         IntentFilter filter =new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         context.registerReceiver(mReceiver, filter);
+    }
+
+    public void unregister(){
+        context.unregisterReceiver(mReceiver);
     }
 
     //序列化

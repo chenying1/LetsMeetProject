@@ -1,12 +1,10 @@
-package com.letsmeet.letsmeetproject.setting;
+package com.letsmeet.letsmeetproject.util;
 
-import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.telephony.TelephonyManager;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;

@@ -1,8 +1,10 @@
 package com.letsmeet.letsmeetproject.sensor;
 
+import android.widget.TextView;
+
 import com.letsmeet.letsmeetproject.MyView;
 import com.letsmeet.letsmeetproject.communicate.Communication;
-import com.letsmeet.letsmeetproject.setting.Config;
+import com.letsmeet.letsmeetproject.util.Config;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,17 +23,33 @@ public class StepDetector {
     public int count ;
     private Communication communication;
     private MyView myView;
+    private TextView textView;
+    private int stepCount = 0;
 
+//    ArrayList<Double> acc_test = new ArrayList<>();
+//    ArrayList<Double> list = new ArrayList<>();
 
-    public StepDetector(MySensorEventListener sensorEventListener,MyView myView,Communication communication){
+//    private Handler handler = new Handler() {
+//        public void handleMessage(android.os.Message msg) {
+//            switch (msg.what) {
+//                case 0:
+//                    textView.setText("步数："+stepCount);
+//                    break;
+//            }
+//        };
+//    };
+
+    public StepDetector(MySensorEventListener sensorEventListener, MyView myView, Communication communication, TextView step){
         this.myView = myView;
         this.sensorEventListener = sensorEventListener;
         this.communication = communication;
+        this.textView = step;
         init();
     }
 
     private void init(){
         accelerateValues = new ArrayList<>();
+
         timer = new Timer();
         task = new TimerTask() {
             @Override
@@ -39,8 +57,25 @@ public class StepDetector {
                 //采集传感器数据
                 Crest crest = new Crest(sensorEventListener.crest);
                 accelerateValues.add(crest);
+//                acc_test.add(crest.value);
                 if (accelerateValues.size()>=20){
                     count = detected(accelerateValues);
+                    stepCount += count;
+//                    handler.obtainMessage(0,"step").sendToTarget();
+//                    JSONObject test = new JSONObject();
+//                    for (int i=0;i<accelerateValues.size();i++){
+//                        list.add(accelerateValues.get(i).value);
+//                    }
+//                    try {
+//                        test.put("status",3);
+//                        test.put("count",count);
+//                        test.put("data",list.toString());
+//                        test.put("acc",acc_test.toString());
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//
+//                    communication.send(test.toString());
                     accelerateValues.clear();
                     if (count<=0){
                         return;
@@ -57,7 +92,7 @@ public class StepDetector {
                         jsonObject.put("status",Config.STATUS_STEP_DETECT);
                         data.put("curX",myView.getCurX());
                         data.put("curY",myView.getCurY());
-                        jsonObject.put("data",data);
+                        jsonObject.put("data",data.toString());
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -70,6 +105,17 @@ public class StepDetector {
 
     private int detected(ArrayList<Crest> list){
         ArrayList<Crest> highlist = new ArrayList<>();
+
+        //对list进行过滤
+//        double[] value = new double[list.size()];
+//        for (int i=0;i<value.length;i++){
+//            value[i] = list.get(i).value;
+//        }
+//        value = Filter.filter(value);
+//        for (int i=0;i<value.length;i++){
+//            list.get(i).setValue(value[i]);
+//        }
+
         Crest lastCrest = list.get(0);
         boolean isUp = false;
         for (int i=1;i<list.size();i++){
@@ -107,7 +153,6 @@ public class StepDetector {
 
         //去除波峰波谷差值小的
         for(int i=1;i<highlist.size();i+=2){
-            //波峰大小  1.2g-2g
             if (highlist.get(i).value-highlist.get(i-1).value<2.5){
                 highlist.set(i,null);
                 highlist.set(i-1,null);
@@ -140,7 +185,6 @@ public class StepDetector {
     private void removeNull(ArrayList<Crest> list){
         for (Iterator<Crest> ite = list.iterator(); ite.hasNext();) {
             Crest str = ite.next();
-            System.out.println(str);
             if (str==null) {
                 ite.remove();
             }

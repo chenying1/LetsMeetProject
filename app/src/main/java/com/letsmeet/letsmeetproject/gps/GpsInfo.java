@@ -13,7 +13,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
-import com.letsmeet.letsmeetproject.setting.Config;
+import com.letsmeet.letsmeetproject.util.Config;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,12 +33,13 @@ public class GpsInfo {
     private List<GpsSatellite> satelliteList = new ArrayList<>(); // 卫星信息
     private static final String TAG = "GpsInfo";
     private Communication communication;
-    private GpsCompare gpsCompare;
 
     public GpsInfo(Context context, Communication communication){
         this.context = context;
         this.communication = communication;
-        gpsCompare = new GpsCompare();
+    }
+
+    public void register(){
         init();
     }
 
@@ -61,13 +62,15 @@ public class GpsInfo {
            this.location = newLocation;
            this.longitude = location.getLongitude();
            this.latitude = location.getLatitude();
+           Log.e(TAG,"Accuracy():"+location.getAccuracy());
             JSONObject sendMsg = new JSONObject();
             JSONObject data = new JSONObject();
             try {
                 sendMsg.put("status",Config.STATUS_LOCATION);
                 data.put("longitude",this.longitude);
                 data.put("latitude",this.latitude);
-                sendMsg.put("data",data);
+                data.put("accuracy",this.location.getAccuracy());
+                sendMsg.put("data",data.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -97,11 +100,9 @@ public class GpsInfo {
                 index++;
             }
         }
-        Log.e(TAG, "卫星个数:" + satelliteList.size());
         satelliteSnr.clear();
         for (int i = 0; i < satelliteList.size(); i++) {
             satelliteSnr.add(satelliteList.get(i).getSnr());
-            Log.e(TAG, "卫星信噪比:" + satelliteList.get(i).getSnr());
         }
     }
     /**

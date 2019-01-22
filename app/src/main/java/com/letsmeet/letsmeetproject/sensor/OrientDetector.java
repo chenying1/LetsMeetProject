@@ -1,8 +1,12 @@
 package com.letsmeet.letsmeetproject.sensor;
 
+import android.hardware.SensorManager;
+import android.util.Log;
+
+import com.letsmeet.letsmeetproject.LocationView;
 import com.letsmeet.letsmeetproject.MyView;
 import com.letsmeet.letsmeetproject.communicate.Communication;
-import com.letsmeet.letsmeetproject.setting.Config;
+import com.letsmeet.letsmeetproject.util.Config;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,10 +27,13 @@ public class OrientDetector {
     private Communication communication;
     private MyView myView;
     private MyView otherView;
+    private LocationView locationView;
+    public float[] angleValues = new float[3];
 
-    public OrientDetector(MyView myView, MyView otherView,MySensorEventListener mySensorEventListener, Communication communication){
+    public OrientDetector(MyView myView, MyView otherView,LocationView locationView,MySensorEventListener mySensorEventListener, Communication communication){
         this.myView = myView;
         this.otherView = otherView;
+        this.locationView = locationView;
         this.mySensorEventListener = mySensorEventListener;
         this.communication = communication;
         init();
@@ -43,36 +50,67 @@ public class OrientDetector {
      */
     private void startOrient(){
         //定时器每隔1s查看收到的数据
-        orientReceiveTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                //当前传感器接收到的数据，即对方的角度
-                receiveDegree = Float.parseFloat(Communication.receiveOrient);
-                if (Math.abs(lastReceiveDegree - receiveDegree)>1){
-                    otherView.orientChanged(receiveDegree);
-                    lastReceiveDegree = receiveDegree;
-                }
-            }
-        }, Config.delay, Config.period);
+//        orientReceiveTimer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//
+//                //当前传感器接收到的数据，即对方的角度
+//                receiveDegree = Communication.receiveOrient;
+//                Log.e("OrientDetector:","重绘other箭头:"+receiveDegree);
+//                if (Math.abs(lastReceiveDegree - receiveDegree)>1){
+//                    otherView.orientChanged(receiveDegree);
+//                    lastReceiveDegree = receiveDegree;
+//
+//                }
+//            }
+//        }, Config.delay, Config.period);
 
         //定时器每隔1s发数据 角度
         orientSendTimer.schedule(new TimerTask() {
             public void run() {
-                rotateDegree = mySensorEventListener.rotateDegree;
-                if (isOrientChange()){
-                    lastRotateDegree = rotateDegree;
-                    JSONObject sendString = new JSONObject();
-                    String data = Float.toString(rotateDegree);
-                    try {
-                        sendString.put("status",Config.STATUS_ORIENT);
-                        sendString.put("data",data);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    communication.send(sendString.toString());
-                }
+                calculateDegree();
+//                rotateDegree = mySensorEventListener.rotateDegree;
+                Log.e("OrientDetector:","发送方向:"+rotateDegree);
+//                if (isOrientChange()){
+//                    lastRotateDegree = rotateDegree;
+//                    JSONObject sendString = new JSONObject();
+//                    String data = Float.toString(rotateDegree);
+//                    try {
+//                        sendString.put("status",Config.STATUS_ORIENT);
+//                        sendString.put("data",data);
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//                    communication.send(sendString.toString());
+//                }
             }
         }, Config.delay, Config.period);
+    }
+
+    private void calculateDegree(){
+        //计算手机朝向
+        float[] R = new float[9];
+        float[] values = new float[3];
+        SensorManager.getRotationMatrix(R, null, mySensorEventListener.accelerometerValues, mySensorEventListener.magneticValues);
+        SensorManager.getOrientation(R, values);
+        angleValues = values.clone();
+        //获取手机朝向的角度
+        rotateDegree = (float) Math.toDegrees(values[0]);
+        if (isOrientChange()) {
+            myView.orientChanged(rotateDegree);
+            locationView.myDegreeChanged(rotateDegree);
+            lastRotateDegree = rotateDegree;
+
+            JSONObject sendString = new JSONObject();
+            String data = Float.toString(rotateDegree);
+            try {
+                sendString.put("status",Config.STATUS_ORIENT);
+                sendString.put("data",data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            communication.send(sendString.toString());
+        }
     }
 
     private boolean isOrientChange(){

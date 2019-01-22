@@ -5,22 +5,24 @@ import android.net.wifi.ScanResult;
 
 import com.letsmeet.letsmeetproject.gps.GpsInfo;
 import com.letsmeet.letsmeetproject.sensor.MySensorEventListener;
-import com.letsmeet.letsmeetproject.setting.SystemUtil;
+import com.letsmeet.letsmeetproject.sensor.OrientDetector;
+import com.letsmeet.letsmeetproject.util.SystemUtil;
 import com.letsmeet.letsmeetproject.wifiInfo.WifiScan;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class SendAllData {
     private MySensorEventListener listener;
     private GpsInfo gpsInfo;
+    private WifiScan wifiScan;
+    private OrientDetector orientDetector;
+
     private float[] accelerometerValues = new float[3];
     private float[] magneticValues = new float[3];
     private float[] gyroscopeValues = new float[3];
@@ -29,23 +31,25 @@ public class SendAllData {
     private int satelliteNum;
     private ArrayList<Float> satelliteSnr = new ArrayList<>();
     private Location location;
-    ArrayList<String> wifiInfo = new ArrayList<>();
+    private ArrayList<String> wifiInfo = new ArrayList<>();
     private SendClient sendClient;
-    private int period = 50;  //ms   采样周期
+    private int period = 1000;  //ms   采样周期
     private Timer timer = new Timer();  //定时器
     private TimerTask task;
-    private WifiScan wifiScan;
-    List<ScanResult> results;
-//    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.sss");
+
+    private List<ScanResult> results = new ArrayList<>();
     private final String TAG = "SendAllData";
     private int count = 0;
     private long timestamp;
 
+    private int stepLen = 10;
 
-    public SendAllData(MySensorEventListener listener,GpsInfo gpsInfo,WifiScan wifiScan){
+
+    public SendAllData(MySensorEventListener listener,GpsInfo gpsInfo,WifiScan wifiScan,OrientDetector orientDetector){
         this.listener = listener;
         this.gpsInfo = gpsInfo;
         this.wifiScan = wifiScan;
+        this.orientDetector = orientDetector;
         init();
     }
 
@@ -60,12 +64,16 @@ public class SendAllData {
                 magneticValues = listener.accelerometerValues.clone();
                 gyroscopeValues = listener.gyroscopeValues.clone();
                 pressure = listener.pressure;
-                angleValues = listener.angleValues.clone();
-                satelliteSnr = gpsInfo.satelliteSnr;
+                angleValues = orientDetector.angleValues.clone();
+                satelliteSnr.clear();
+                satelliteSnr.addAll(gpsInfo.satelliteSnr);
+//                satelliteSnr = gpsInfo.satelliteSnr;
                 satelliteNum = satelliteSnr.size();
                 location = gpsInfo.location;
                 wifiInfo.clear();
-                results = wifiScan.results;
+                results.clear();
+                results.addAll(wifiScan.results);
+//                results = wifiScan.results;
                 if (results!=null){
                     for (ScanResult result:results){
                         JSONObject wifi = new JSONObject();
@@ -123,7 +131,23 @@ public class SendAllData {
                 sendClient.sendMsg(sendString);
             }
         };
+
+    }
+
+    public void setPeriod(int frequency){
+        this.period = 1000/frequency;
+    }
+
+    public void setStepLen(int len){
+        this.stepLen = len;
+    }
+
+    public void startSendData(){
         timer.schedule(task,0,period);
+    }
+
+    public void finishSendData(){
+        timer.cancel();
     }
 
 }

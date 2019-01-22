@@ -13,15 +13,13 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.letsmeet.letsmeetproject.gps.AngleUtil;
-
 public class LocationView extends View {
 
     private Path arrowPath; //箭头的路径
-    private int arrowR = 12; // 箭头半径
+    private int arrowR = 11; // 箭头半径
     private Paint arrowPaint;
-    public Paint arrowPaint2;
-
+    private Paint arrowPaint2;
+    private Paint circlePaint;  //外部画圆的笔
     private Context context ;
 
 
@@ -32,31 +30,27 @@ public class LocationView extends View {
     private int myLocationY;
     private int otherLocationX;
     private int otherLocationY;
-    private int len = 100000;
 
     private float myDegree = 0;
-    private float otherDegree = 90;
+    private float otherDegree = 0;
 
-    private double LonA = 0;
-    private double LatA = 0;
-    private double LonB = 114.50923027;
-    private double LatB = 30.51217833;
+    private double lonA = 0;
+    private double latA = 0;
+    private double lonB = 0;
+    private double latB = 0;
 
     private int viewWidth;
     private int viewHeight;
     private boolean isViewDouble = false;
 
-    private double sita = 0;
-    private float r = 100;  //半径
+    private int circle_r = 100;  //外边框的圆半径
 
-    private GestureDetector gestureDetector = null;
-    private boolean isStart = false;
-
-    private float translateX = 0;
-    private float translateY = 0;
+//    private GestureDetector gestureDetector = null;
 
     private int lastX;
     private int lastY;
+
+    private int accuracy;
 
     private final String TAG = "LocationView";
 
@@ -75,6 +69,14 @@ public class LocationView extends View {
         super.onDraw(canvas);
         drawArrow(canvas);
         drawOtherArrow(canvas);
+        drawText(canvas);
+    }
+
+    private void drawText(Canvas canvas){
+        String text = accuracy+"";
+        arrowPaint.setTextAlign(Paint.Align.CENTER);
+        arrowPaint.setTextSize(30);
+        canvas.drawText(text,centerX,centerY*3/2,arrowPaint);
     }
 
     //onSizeChanged在onDraw之前执行
@@ -87,6 +89,22 @@ public class LocationView extends View {
         centerY = h/2;
         myLocationX = centerX;
         myLocationY = centerY;
+        otherLocationX = myLocationX;
+        otherLocationY = myLocationY-circle_r;
+    }
+
+    public void myDegreeChanged(float myDegreeNew){
+        if (Math.abs(myDegreeNew-myDegree)>1) {
+            this.myDegree = myDegreeNew;
+            postInvalidate();
+        }
+    }
+
+    public void otherDegreeChanged(float otherDegreeNew){
+        if (Math.abs(otherDegreeNew - otherDegree)>1) {
+            this.otherDegree = otherDegreeNew;
+            postInvalidate();
+        }
     }
 
     private void init(){
@@ -103,14 +121,17 @@ public class LocationView extends View {
         arrowPaint.setColor(Color.WHITE);
         // 画箭头画笔2
         arrowPaint2 = new Paint(Paint.DITHER_FLAG);
-        arrowPaint2.setColor(getResources().getColor(R.color.red));
+        arrowPaint2.setColor(getResources().getColor(R.color.deepblue));
         arrowPaint2.setAntiAlias(true);
         arrowPaint2.setDither(true);
 
-        otherLocationX = myLocationX;
-        otherLocationY = myLocationY;
+//        外部画圆的画笔
+        circlePaint = new Paint();
+        circlePaint.setStyle(Paint.Style.STROKE);
+        circlePaint.setStrokeWidth(3);
+        circlePaint.setColor(Color.BLACK);
 
-        gestureDetector = new GestureDetector(context,new GestureListener());
+//        gestureDetector = new GestureDetector(context,new GestureListener());
     }
 
     //绘制箭头
@@ -122,11 +143,19 @@ public class LocationView extends View {
         canvas.save();
         canvas.translate(myLocationX, myLocationY); // 平移画布
         canvas.rotate(myDegree); // 转动画布
+
+        //画外部圆圈
+        canvas.drawCircle(0,0,circle_r,circlePaint);
         //画箭头
+        arrowPaint2.setColor(getResources().getColor(R.color.deepblue));
         canvas.drawPath(arrowPath, arrowPaint2);
         canvas.drawCircle(0,0,arrowR,arrowPaint2);
         canvas.drawCircle(0,0,arrowR*0.9f,arrowPaint);
         canvas.restore(); // 恢复画布
+    }
+
+    private void drawLine(Canvas canvas) {
+
     }
 
     //绘制箭头
@@ -135,6 +164,7 @@ public class LocationView extends View {
         canvas.translate(otherLocationX, otherLocationY); // 平移画布
         canvas.rotate(otherDegree); // 转动画布
         //画箭头
+        arrowPaint2.setColor(getResources().getColor(R.color.red));
         canvas.drawPath(arrowPath, arrowPaint2);
         canvas.drawCircle(0,0,arrowR,arrowPaint2);
         canvas.drawCircle(0,0,arrowR*0.9f,arrowPaint);
@@ -142,61 +172,62 @@ public class LocationView extends View {
     }
 
     //相对位置方向改变重绘
-    public void locationChanged(){
-        sita = AngleUtil.getAngle(LonA,LatA,LonB,LatB);
-//        int x = (int) (len*(LonB - LonA));
-//        int y = (int) (len*(LatB - LatA));
-        int x = (int) (r * Math.sin(sita));
-        int y = (int) (r * Math.cos(sita));
+    public void locationChanged(int sitaNew,int accuracy){
+//        double sita = AngleUtil.getAngle(lonA,latA,lonB,latB);
+        double sita = sitaNew;
+        this.accuracy = accuracy;
+        int x = (int) (circle_r * Math.sin(Math.toRadians(sita)));
+        int y = (int) (circle_r * Math.cos(Math.toRadians(sita)));
         otherLocationX = myLocationX + x;
         otherLocationY = myLocationY - y;
-        Log.e(TAG,"LonA:"+this.LonA+" LatA:"+this.LatA+" LonB:"+this.LonB+" LatB:"+this.LatB+" x:"+x+" y:"+y);
+        Log.e(TAG,"LonA:"+this.lonA+" LatA:"+this.latA+" LonB:"+this.lonB+" LatB:"+this.latB+" x:"+x+" y:"+y);
         Log.e(TAG,"otherLocationX:"+otherLocationX+" otherLocationY:"+otherLocationY);
+        Log.e(TAG,"myLocationX:"+myLocationX+" myLocationY:"+myLocationY);
         Log.e(TAG,"sita:"+sita);
         postInvalidate();
     }
 
-    public void setLocation(double LonA, double LatA, double LonB, double LatB){
-        this.LonA = LonA;
-        this.LatA = LatA;
-//        this.LonB = LonB;
-//        this.LatB = LatB;
+    public void setLocation(double lonA, double latA, double lonB, double latB){
+        this.lonA = lonA;
+        this.latA = latA;
+        this.lonB = lonB;
+        this.latB = latB;
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        int x = (int) event.getX();
-        int y = (int) event.getY();
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        int x = (int) event.getX();
+//        int y = (int) event.getY();
+//
+//        switch(event.getAction()){
+//            case MotionEvent.ACTION_DOWN:
+//                lastX = x;
+//                lastY = y;
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                //计算移动的距离
+//                int offX = x - lastX;
+//                int offY = y - lastY;
+//                //调用layout方法来重新放置它的位置
+//                layout(getLeft()+offX, getTop()+offY,
+//                        getRight()+offX    , getBottom()+offY);
+//                break;
+//        }
+////                gestureDetector.onTouchEvent(event);
+//        return true;
+//    }
 
-        switch(event.getAction()){
-            case MotionEvent.ACTION_DOWN:
-                lastX = x;
-                lastY = y;
-                break;
-            case MotionEvent.ACTION_MOVE:
-                //计算移动的距离
-                int offX = x - lastX;
-                int offY = y - lastY;
-                //调用layout方法来重新放置它的位置
-                layout(getLeft()+offX, getTop()+offY,
-                        getRight()+offX    , getBottom()+offY);
-                break;
-        }
-                gestureDetector.onTouchEvent(event);
-        return true;
-    }
-
-    /**
-     * 实现界面的滑动平移
-     */
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onDoubleTap(MotionEvent e) {
-            isViewDouble = isViewDouble?false:true;
-            viewTranslate();
-            return super.onDoubleTap(e);
-        }
-    }
+//    /**
+//     * 实现手指双击放大缩小   已弃用
+//     */
+//    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+//        @Override
+//        public boolean onDoubleTap(MotionEvent e) {
+//            isViewDouble = isViewDouble?false:true;
+//            viewTranslate();
+//            return super.onDoubleTap(e);
+//        }
+//    }
 
     private void viewTranslate(){
         int width;

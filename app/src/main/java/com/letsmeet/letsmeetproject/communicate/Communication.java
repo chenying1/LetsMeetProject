@@ -1,19 +1,21 @@
 package com.letsmeet.letsmeetproject.communicate;
 
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.TextView;
 
+import com.letsmeet.letsmeetproject.LocationView;
 import com.letsmeet.letsmeetproject.MyView;
-import com.letsmeet.letsmeetproject.setting.Config;
+import com.letsmeet.letsmeetproject.util.Config;
+import com.letsmeet.letsmeetproject.util.NavigateTip;
 
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -24,21 +26,47 @@ public class Communication {
     private boolean isSendMsgReady;
     public BufferedReader mReader;
     private BufferedWriter mWriter;
-    public static String receiveOrient = "0.0";
+    public static float receiveOrient = 0;
     public static int otherStepCount = 0;
     public double receiveLongitude;
     public double receiveLatitude;
 
-    public ArrayList<String> otherWifilist;
+    public ArrayList<String> otherWifilist = new ArrayList<>();
 
     private String TAG = "Communication";
     private MyView otherView;
+    private LocationView locationView;
+    private TextView navigateView;
 
     private String ip= Config.SERVER_IP;
     private int port=Config.SERVER_PORT;
 
-    public Communication(MyView otherView){
+//    private int[] colors = {90808080,1E90FF,
+//    };
+
+    private String user;
+
+    private Handler handler = new Handler(){
+        public void handleMessage(android.os.Message msg) {
+            switch (msg.what) {
+                case 0:
+                    int tipStatus = (int) msg.obj;
+                    String tipString = NavigateTip.getTip(tipStatus);
+                    Log.e(TAG+"N","tipStatus:"+tipStatus);
+                    Log.e(TAG+"N","tipString:"+tipString);
+                    Log.e(TAG+"N","BackgroundColor:"+NavigateTip.getColor(tipStatus));
+                    navigateView.setBackgroundColor(NavigateTip.getColor(tipStatus));
+                    navigateView.setText(tipString);
+                    break;
+            }
+        };
+    };
+
+    public Communication(MyView otherView,LocationView locationView,TextView navigateView,String user){
+        this.user = user;
         this.otherView = otherView;
+        this.locationView = locationView;
+        this.navigateView = navigateView;
         initSocket();
     }
 
@@ -94,8 +122,11 @@ public class Communication {
                 //从输出流中获取数据
                 mWriter=new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(),"utf-8"));
                 isSendMsgReady = true;
+                JSONObject init = new JSONObject();
+                init.put("status",5);
+                init.put("data",user);
+                sendMsg(init.toString());
 //                Log.e(TAG,"连接服务器成功");
-                otherWifilist = new ArrayList<>();
                 receiveMsg();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -118,34 +149,38 @@ public class Communication {
                     while (true){
                         if (isReceivingMsgReady&&mReader.ready()) {
                             JSONObject receiveMsg = new JSONObject(mReader.readLine());
-                            Log.e("receiveMsg:",receiveMsg.toString());
                             int status = (int)receiveMsg.get("status");
                             switch (status) {
                                 case 0:  //对方方向更新
-                                    receiveOrient = (String)receiveMsg.get("data");
+                                    String s = receiveMsg.getString("data");
+                                    receiveOrient = Float.parseFloat(s);
+                                    locationView.otherDegreeChanged(receiveOrient);
+                                    otherView.orientChanged(receiveOrient);
                                     break;
-                                case 1:   //对方发送的wifi数据
-                                    String recvString = (String)receiveMsg.get("data");
-                                    otherWifilist = (ArrayList<String>) deserializeToObject(recvString);
+                                case 1:   //对方发送的wifi数据  wifi数据在服务器端处理，不再转发过来
                                     break;
                                 case 2:  //对方轨迹更新
-//                                    Log.e("TAG","对方步伐有更新。");
                                     otherStepCount++;
-                                    JSONObject coordinate = (JSONObject)receiveMsg.get("data");;
+                                    JSONObject coordinate = new JSONObject(receiveMsg.getString("data"));
                                     double x = (double) coordinate.get("curX");
                                     double y = (double) coordinate.get("curY");
                                     otherView.autoAddStep((float) x,(float)y);
                                     break;
-                                case 4:    //对方GPS位置更新
-                                    Log.e("TAG","对方Location更新");
-                                    JSONObject location = (JSONObject) receiveMsg.get("data");
-                                    receiveLongitude = location.getDouble("longitude");
-                                    receiveLatitude = location.getDouble("latitude");
-                                    Log.e("TAG","longitude_other:"+receiveLongitude);
-                                    Log.e("TAG","latitude_other:"+receiveLongitude);
+                                case 4:    //对方GPS位置更新   GPS数据在服务器端处理，不再转发过来
+                                    break;
+                                case 5:   //导航提示
+                                    JSONObject navigate = (JSONObject) receiveMsg.get("data");
+                                    Log.e("Communication","接收到导航提示："+navigate);
+                                    int sita = navigate.getInt("sita");
+                                    int tipStatus = navigate.getInt("tip_status");
+                                    int accuracy = navigate.getInt("accuracy");
+                                    locationView.locationChanged(sita,accuracy);
+                                    Log.e("Communication",NavigateTip.getTip(tipStatus));
+                                    handler.obtainMessage(0,tipStatus).sendToTarget();
+                                    break;
                             }
                         }
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -153,14 +188,6 @@ public class Communication {
 
             }
         }).start();
-    }
-
-    //字符串 反序列化
-    private Object deserializeToObject(String str) throws Exception{
-        ByteArrayInputStream byteIn = new ByteArrayInputStream(str.getBytes("ISO-8859-1"));
-        ObjectInputStream objIn = new ObjectInputStream(byteIn);
-        Object obj =objIn.readObject();
-        return obj;
     }
 
     public void closeCommunication(){

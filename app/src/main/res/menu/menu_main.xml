@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.letsmeet.letsmeetproject.MainActivity">
+    <item
+        android:id="@+id/setting"
+        android:title="采样设置"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/clear"
+        android:title="清屏"
+        app:showAsAction="never" />
+</menu>
