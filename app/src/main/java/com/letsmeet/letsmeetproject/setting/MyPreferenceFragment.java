@@ -1,6 +1,7 @@
 package com.letsmeet.letsmeetproject.setting;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.MultiSelectListPreference;
@@ -18,6 +19,7 @@ import java.util.HashSet;
 public class MyPreferenceFragment extends PreferenceFragment {
 
     private static final String TAG = "MyPreferenceFragment";
+    String fre = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,22 +43,17 @@ public class MyPreferenceFragment extends PreferenceFragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private static void bindPreferenceSummaryToValue(Preference preference) {
+    private void bindPreferenceSummaryToValue(Preference preference) {
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
 
         // Trigger the listener immediately with the preference's
         // current value.
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(preference.getContext());
         if (preference instanceof MultiSelectListPreference){
-            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                    PreferenceManager
-                            .getDefaultSharedPreferences(preference.getContext())
-                            .getStringSet(preference.getKey(), null));
+            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,sharedPreferences.getStringSet(preference.getKey(), null));
         }else {
-            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                    PreferenceManager
-                            .getDefaultSharedPreferences(preference.getContext())
-                            .getString(preference.getKey(), ""));
+            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,sharedPreferences.getString(preference.getKey(), ""));
         }
     }
 
@@ -64,7 +61,7 @@ public class MyPreferenceFragment extends PreferenceFragment {
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
      */
-    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+    private  Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
             String stringValue = value.toString();
@@ -72,10 +69,11 @@ public class MyPreferenceFragment extends PreferenceFragment {
 
             String key = preference.getKey();
             switch (key){
-                case "dataCollectSwitch":
+                case "dataCollectSwitch":  //采集数据开关
                     Log.e(TAG,"dataCollectSwitch"+value.toString());
+
                     break;
-                case "parameter":
+                case "parameter":   //采集参数设置
                     MultiSelectListPreference parameterP = (MultiSelectListPreference) preference;
                     Log.e(TAG,"parameter"+value.toString());
                     HashSet<String> parametersValue = (HashSet<String>) value;
@@ -86,11 +84,12 @@ public class MyPreferenceFragment extends PreferenceFragment {
                     }
 //                    parameterP.setSummary(parameter.toString());
                     break;
-                case "stepLength":
+                case "stepLength":    //步长设置
                     Log.e(TAG,"stepLength"+value.toString());
                     preference.setSummary(stringValue);
+                    fre = stringValue;
                     break;
-                case "frequency":
+                case "frequency":      //采样频率设置
                     ListPreference frequencyL = (ListPreference) preference;
                     int index = frequencyL.findIndexOfValue(stringValue);
                     preference.setSummary(
@@ -99,24 +98,6 @@ public class MyPreferenceFragment extends PreferenceFragment {
                                     : null);
                     break;
             }
-
-//            if (preference instanceof ListPreference) {
-//                // For list preferences, look up the correct display value in
-//                // the preference's 'entries' list.
-//                ListPreference listPreference = (ListPreference) preference;
-//                int index = listPreference.findIndexOfValue(stringValue);
-//
-//                // Set the summary to reflect the new value.
-//                preference.setSummary(
-//                        index >= 0
-//                                ? listPreference.getEntries()[index]
-//                                : null);
-//
-//            }  else {
-//                // For all other preferences, set the summary to the value's
-//                // simple string representation.
-//                preference.setSummary(stringValue);
-//            }
             return true;
         }
     };

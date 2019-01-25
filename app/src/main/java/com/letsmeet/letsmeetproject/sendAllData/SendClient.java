@@ -25,18 +25,20 @@ public class SendClient {
     /**
      * 向服务器发送消息
      */
-    public void sendMsg(String msg) {
+    public boolean sendMsg(String msg) {
         if (msg==null||msg.length()==0||(!isSendMsgReady)){
-            return;
+            return false;
         }
         try {
             mWriter.write(msg+"\n");
             mWriter.flush();
             Log.e(TAG,msg);
+            return true;
         } catch (IOException e) {
             isSendMsgReady = false;
             initSocket();
             e.printStackTrace();
+            return false;
         }
     }
 

@@ -33,6 +33,10 @@ import com.letsmeet.letsmeetproject.sensor.StepDetector;
 import com.letsmeet.letsmeetproject.setting.MySettingActivity;
 import com.letsmeet.letsmeetproject.wifiInfo.WifiScan;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
     private Context context = this;
@@ -51,6 +55,13 @@ public class MainActivity extends AppCompatActivity {
     private TextView stepDetectorView;
     Dialog dia;
     ImageView imageView;
+    SharedPreferences sharedPreferences;
+//    private boolean isCollectData = false;
+    private int frequency;
+    private int stepLen;
+    private int parament;
+    private String TAG = "MainActivity";
+    SendAllData sendAllData = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,15 +87,10 @@ public class MainActivity extends AppCompatActivity {
         wifiScan.start();
         orientDetector = new OrientDetector(myView,otherView,locationView,listener,communication);
         stepDetector = new StepDetector(listener,myView,communication,stepDetectorView);
-//        SendAllData sendAllData = new SendAllData(listener,gpsInfo,wifiScan,orientDetector);
+        sendAllData = new SendAllData(listener,gpsInfo,wifiScan,orientDetector,user,myView);
 
         String packageName = this.getClass().getPackage().getName();
-        SharedPreferences sharedPreferences = getSharedPreferences(packageName+"_preferences", Context.MODE_PRIVATE); //创建SharedPreferences对象
-        String userName=sharedPreferences.getString("frequency","20");//根据key获取对应的数据
-//        String password=sharedPreferences.getString("Password","");
-        Log.e("MainActivity","userName 初始化frequency packageName:"+packageName);
-        Log.e("MainActivity","userName"+userName);
-
+        sharedPreferences = getSharedPreferences(packageName+"_preferences", Context.MODE_PRIVATE); //创建SharedPreferences对象
 
         imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setOnClickListener(new View.OnClickListener() {
@@ -116,6 +122,73 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        boolean isCollectData = sharedPreferences.getBoolean("dataCollectSwitch",false);
+        Log.e(TAG,"isCollect:"+isCollectData);
+
+        int frequency=Integer.parseInt(sharedPreferences.getString("frequency","20"));//根据key获取对应的数据
+        Log.e(TAG,"frequency:"+frequency);
+        Set<String> parameters = sharedPreferences.getStringSet("parameter",new HashSet<String>());
+        Log.e(TAG,"parameters:"+parameters);
+        int stepLen = Integer.parseInt(sharedPreferences.getString("stepLength","10"));
+        Log.e(TAG,"stepLen:"+stepLen);
+
+        boolean isChanged = false;
+        if (sendAllData!=null){
+            if (sendAllData.getFrequency()!=frequency){
+                sendAllData.setFrequency(frequency);
+                isChanged = true;
+            }
+            if (sendAllData.getStepLenght()!=stepLen){
+                sendAllData.setStepLenght(stepLen);
+                isChanged = true;
+            }
+            if (!isSetEqual(sendAllData.getParameters(),parameters)){
+                sendAllData.setParameters(parameters);
+                isChanged = true;
+            }
+            if (sendAllData.isCollectData()!=isCollectData){
+                sendAllData.setCollectData(isCollectData);
+                Log.e(TAG,"sendAllData.isCollectData():"+sendAllData.isCollectData());
+                isChanged = true;
+            }
+
+            if (isChanged){
+                Log.e(TAG,"isChanged");
+                if (isCollectData){
+//                    若参数有变化，且是开启收集数据的状态，则需要重新启动收集数据的程序
+                    sendAllData.startSendData();
+                }else {
+//                    若参数有变化，且是关闭的状态
+                    sendAllData.finishSendData();
+                }
+            }
+        }
+
+    }
+
+    private boolean isSetEqual(Set<String> set1, Set<String> set2){
+        if (set1==null&&set2==null){
+            return true;
+        }
+        if (set1==null||set2==null||set1.size()!=set2.size()){
+            return false;
+        }
+        if (set1.size()==0&&set2.size()==0){
+            return true;
+        }
+        Iterator iterator1 = set1.iterator();
+        Iterator iterator2 = set2.iterator();
+        while (iterator2.hasNext()){
+            if (!set1.contains(iterator2.next())){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         //释放传感器资源
@@ -142,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.setting:
                 Log.e("Main","点击了设置");
                 Intent intent = new Intent(this,MySettingActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent,0);
                 break;
             case R.id.clear:
                 Log.e("Main","点击了清屏");

@@ -105,17 +105,6 @@ public class StepDetector {
 
     private int detected(ArrayList<Crest> list){
         ArrayList<Crest> highlist = new ArrayList<>();
-
-        //对list进行过滤
-//        double[] value = new double[list.size()];
-//        for (int i=0;i<value.length;i++){
-//            value[i] = list.get(i).value;
-//        }
-//        value = Filter.filter(value);
-//        for (int i=0;i<value.length;i++){
-//            list.get(i).setValue(value[i]);
-//        }
-
         Crest lastCrest = list.get(0);
         boolean isUp = false;
         for (int i=1;i<list.size();i++){
