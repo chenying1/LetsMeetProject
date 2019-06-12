@@ -31,6 +31,8 @@ public class WifiScan extends Thread{
     private final String TAG = "WifiScan";
     public ArrayList<String> wifilist = new ArrayList<>();
 
+    private String wifiData;
+
     public WifiScan(Context context, Communication communication){
         this.context = context;
         this.communication = communication;
@@ -40,11 +42,22 @@ public class WifiScan extends Thread{
 
     @Override
     public void run() {
+        JSONObject sendString = new JSONObject();
         while (flag) {
             Log.e(TAG,"run");
+//            每隔3s扫描一次wifi
             startWifiScan();
             try {
-                Thread.sleep(3000);
+                if (wifiData!=null&&wifiData.length()!=0){
+                    sendString.put("status",Config.STATUS_WIFI);
+                    sendString.put("data",wifiData);
+                    communication.send(sendString.toString());
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            try {
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -65,7 +78,6 @@ public class WifiScan extends Thread{
                     if (results !=null) {
                         JSONObject sendString = new JSONObject();
                         try {
-                            sendString.put("status",Config.STATUS_WIFI);
                             wifilist.clear();
                             for (ScanResult scanResult : results) {
                                 JSONObject wifi = new JSONObject();
@@ -73,9 +85,11 @@ public class WifiScan extends Thread{
                                 wifi.put("level",scanResult.level);
                                 wifilist.add(wifi.toString());
                             }
+                            wifiData = serializeToString(wifilist);
                             Log.e(TAG,"results:"+results.size()+" "+results);
-                            sendString.put("data",serializeToString(wifilist));
-                            communication.send(sendString.toString());
+//                            sendString.put("status",Config.STATUS_WIFI);
+//                            sendString.put("data",serializeToString(wifilist));
+//                            communication.send(sendString.toString());
                         } catch (JSONException e) {
                             e.printStackTrace();
                         } catch (Exception e) {
@@ -86,7 +100,6 @@ public class WifiScan extends Thread{
 //                startWifiScan();
             }
         };
-
         IntentFilter filter =new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         context.registerReceiver(mReceiver, filter);
     }

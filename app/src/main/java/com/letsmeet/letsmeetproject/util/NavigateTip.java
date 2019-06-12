@@ -4,43 +4,43 @@ import android.graphics.Color;
 
 public class NavigateTip {
     //	未知
-    private final static int UNKNOW = 0;
+    public final static int UNKNOW = 0;
     private static String UNKNOW_S = "等待连接......";
     //正北
-    private final static int NORTH = 1;
+    public final static int NORTH = 1;
     private static String NORTH_S = "目标位于正北方";
     //	正南
-    private final static int SOUTH = 2;
+    public final static int SOUTH = 2;
     private static String SOUTH_S = "目标位于正南方";
     //	正东
-    private final static int EAST = 3;
+    public final static int EAST = 3;
     private static String EAST_S = "目标位于正东方";
     //	正西
-    private final static int WEST = 4;
+    public final static int WEST = 4;
     private static String WEST_S = "目标位于正西方";
     //	东北
-    private final static int NORTH_EAST = 5;
+    public final static int NORTH_EAST = 5;
     private static String NORTH_EAST_S = "目标位于东北方";
     //	东南
-    private final static int SOUTH_EAST = 6;
+    public final static int SOUTH_EAST = 6;
     private static String SOUTH_EAST_S = "目标位于东南方";
     //	西北
-    private final static int NORTH_WEST = 7;
+    public final static int NORTH_WEST = 7;
     private static String NORTH_WEST_S = "目标位于西北方";
     //	西南
-    private final static int SOUTH_WEST = 8;
+    public final static int SOUTH_WEST = 8;
     private static String SOUTH_WEST_S = "目标位于西南方";
     //	正在远离
-    private final static int FAR_AWAY = 9;
+    public final static int FAR_AWAY = 9;
     private static String FAR_AWAY_S = "正在远离目标，请改变当前方向前行";
     //	正在靠近
-    private final static int NEAR = 10;
+    public final static int NEAR = 10;
     private static String NEAR_S = "正在靠近目标，请保持当前方向继续前进";
     //	继续前进
-    private final static int KEEP = 11;
-    private static String KEEP_S = "继续前进";
+    public final static int KEEP = 11;
+    private static String KEEP_S = "无法判断，请继续前进以试探周围方向";
     //	相遇
-    private final static int MEET = 12;
+    public final static int MEET = 12;
     private static String MEET_S = "相遇";
 
     private static int RED = Color.parseColor("#FF6347");
@@ -84,13 +84,6 @@ public class NavigateTip {
     public static int getColor(int status){
         switch (status){
             case UNKNOW:
-//                int c = R.color.colorAccent;
-//                int x = Color.parseColor(Integer.toString(c));
-//                #FF6347 橘红色
-//                #3cb371 绿色
-//                #7b68ee 紫色
-//                #87ceeb 浅蓝色
-//                #4682b4 深蓝色
                 return BLUE;
             case NORTH:
                 return PURPLE;

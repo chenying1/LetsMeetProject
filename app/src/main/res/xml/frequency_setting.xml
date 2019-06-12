@@ -1,0 +1,76 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_accelerate"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/accelerate_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_magnetic"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/magnetic_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_orient"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/orient_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_gyroscope"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/gyroscope_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_pressure"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pressure_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_light"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/light_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_GPS"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/gps_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_satellite"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/satellite_frequency" />
+    <ListPreference
+        android:defaultValue="20"
+        android:entries="@array/frequency"
+        android:entryValues="@array/frequency_values"
+        android:key="frequency_WiFi"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/wifi_frequency" />
+
+</PreferenceScreen>

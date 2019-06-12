@@ -38,16 +38,16 @@
             <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             <!-- </intent-filter> -->
         </activity>
-        <activity
-            android:name=".login.LoginActivity"
-            >
+        <activity android:name=".login.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".setting.MySettingActivity"></activity>
+        <activity android:name=".setting.MySettingActivity" />
+        <activity android:name=".setting.FrequencySettingActivity" />
+        <activity android:name=".register.RegisterActivity"></activity>
     </application>
 
 </manifest>

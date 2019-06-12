@@ -9,6 +9,7 @@ import com.letsmeet.letsmeetproject.MyView;
 import com.letsmeet.letsmeetproject.gps.GpsInfo;
 import com.letsmeet.letsmeetproject.sensor.MySensorEventListener;
 import com.letsmeet.letsmeetproject.sensor.OrientDetector;
+import com.letsmeet.letsmeetproject.util.MyUtil;
 import com.letsmeet.letsmeetproject.util.SystemUtil;
 import com.letsmeet.letsmeetproject.wifiInfo.WifiScan;
 
@@ -16,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+
+
 
 public class SendAllData {
     private MySensorEventListener listener;
@@ -34,6 +38,7 @@ public class SendAllData {
     private float[] magneticValues = new float[3];
     private float[] gyroscopeValues = new float[3];
     private float pressure;
+    private float light;
     private float[] angleValues = new float[3];
     private int satelliteNum;
     private ArrayList<Float> satelliteSnr = new ArrayList<>();
@@ -83,6 +88,8 @@ public class SendAllData {
 //    7:卫星
 //    8:WiFi
 
+//    status 1 表示采集数据初始化  2：表示采集的数据
+
     private void init(){
         sendClient = new SendClient();
     }
@@ -98,7 +105,7 @@ public class SendAllData {
             JSONObject sendJson = new JSONObject();
             JSONObject dataJson = new JSONObject();
             try {
-                String parameters_str = serializeToString(parameters);
+                String parameters_str = MyUtil.serializeToString(parameters);
                 sendJson.put("status",1);
                 dataJson.put("user",user);
                 dataJson.put("modelType",modelType);
@@ -125,9 +132,10 @@ public class SendAllData {
         private void sendData(){
             updateLocationId();
             accelerometerValues = listener.accelerometerValues.clone();
-            magneticValues = listener.accelerometerValues.clone();
+            magneticValues = listener.magneticValues.clone();
             gyroscopeValues = listener.gyroscopeValues.clone();
             pressure = listener.pressure;
+            light = listener.light;
             angleValues = orientDetector.angleValues.clone();
             satelliteSnr.clear();
             satelliteSnr.addAll(gpsInfo.satelliteSnr);
@@ -189,6 +197,7 @@ public class SendAllData {
                 }
                 if (parameters.contains("5")){
                     Log.e(TAG,"5光强度");
+                    data.put("light",light);
                 }
                 if (parameters.contains("6")){
                     Log.e(TAG,"6 GPS");
@@ -205,7 +214,7 @@ public class SendAllData {
                 }
                 if (parameters.contains("8")){
                     Log.e(TAG,"8 WiFi");
-                    data.put("wifiInfo",wifiInfo.toString());
+                    data.put("wifiInfo",MyUtil.serializeToString(wifiInfo));
                 }
 //                data.put("period",period);
                 timestamp = System.currentTimeMillis();
@@ -235,13 +244,19 @@ public class SendAllData {
     }
 
     //序列化
-    public String serializeToString(Object obj) throws Exception{
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        ObjectOutputStream objOut = new ObjectOutputStream(byteOut);
-        objOut.writeObject(obj);
-        String str = byteOut.toString("ISO-8859-1");//此处只能是ISO-8859-1,但是不会影响中文使用
-        return str;
-    }
+//    public String serializeToString(Object obj){
+//        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+//        ObjectOutputStream objOut = null;
+//        String str = null;
+//        try {
+//            objOut = new ObjectOutputStream(byteOut);
+//            objOut.writeObject(obj);
+//            str = byteOut.toString("ISO-8859-1");//此处只能是ISO-8859-1,但是不会影响中文使用
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return str;
+//    }
 
     public void setFrequency(int frequency){
         this.frequency = frequency;
@@ -271,6 +286,7 @@ public class SendAllData {
         }
         timer = new Timer();
         task = new MyTimerTask();
+        Log.e(TAG,"开始采集数据");
         timer.schedule(task,0,period);
     }
 

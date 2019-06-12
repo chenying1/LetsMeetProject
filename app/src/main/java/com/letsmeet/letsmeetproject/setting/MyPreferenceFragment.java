@@ -46,6 +46,7 @@ public class MyPreferenceFragment extends PreferenceFragment {
     private void bindPreferenceSummaryToValue(Preference preference) {
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+        preference.setOnPreferenceClickListener(clickListener);
 
         // Trigger the listener immediately with the preference's
         // current value.
@@ -66,12 +67,10 @@ public class MyPreferenceFragment extends PreferenceFragment {
         public boolean onPreferenceChange(Preference preference, Object value) {
             String stringValue = value.toString();
             Log.e("PreFra",stringValue);
-
             String key = preference.getKey();
             switch (key){
                 case "dataCollectSwitch":  //采集数据开关
                     Log.e(TAG,"dataCollectSwitch"+value.toString());
-
                     break;
                 case "parameter":   //采集参数设置
                     MultiSelectListPreference parameterP = (MultiSelectListPreference) preference;
@@ -96,6 +95,21 @@ public class MyPreferenceFragment extends PreferenceFragment {
                             index >= 0
                                     ? frequencyL.getEntries()[index]
                                     : null);
+                    break;
+            }
+            return true;
+        }
+    };
+
+    private Preference.OnPreferenceClickListener clickListener = new Preference.OnPreferenceClickListener() {
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+            String key = preference.getKey();
+            switch (key){
+                case "frequency":
+                    Log.e("MyPreferenceFragment","点击了采样频率");
+                    Intent intent = new Intent(getActivity(),FrequencySettingActivity.class);
+                    startActivityForResult(intent,1);
                     break;
             }
             return true;

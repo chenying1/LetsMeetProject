@@ -2,6 +2,7 @@ package com.letsmeet.letsmeetproject.communicate;
 
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -97,9 +98,7 @@ public class Communication {
             mWriter.write(msg+"\n");
             //调用flush将缓存中的数据写到服务器
             mWriter.flush();
-//            Log.e("Communication",msg);
         } catch (IOException e) {
-//            Log.e(TAG,"与服务器断开连接");
             isSendMsgReady = false;
             initSocket();
             e.printStackTrace();
@@ -126,11 +125,9 @@ public class Communication {
                 init.put("status",5);
                 init.put("data",user);
                 sendMsg(init.toString());
-//                Log.e(TAG,"连接服务器成功");
                 receiveMsg();
             } catch (Exception e) {
                 e.printStackTrace();
-//                Log.e(TAG,"连接服务器失败");
                 try { //若连接服务器失败，则每4s重新连接
                     Thread.sleep(4000);
                 } catch (InterruptedException e1) {
@@ -170,12 +167,10 @@ public class Communication {
                                     break;
                                 case 5:   //导航提示
                                     JSONObject navigate = (JSONObject) receiveMsg.get("data");
-                                    Log.e("Communication","接收到导航提示："+navigate);
                                     int sita = navigate.getInt("sita");
                                     int tipStatus = navigate.getInt("tip_status");
-                                    int accuracy = navigate.getInt("accuracy");
-                                    locationView.locationChanged(sita,accuracy);
-                                    Log.e("Communication",NavigateTip.getTip(tipStatus));
+                                    int distanceStatus = navigate.getInt("distance_status");
+                                    locationView.locationChanged(sita,distanceStatus,tipStatus);
                                     handler.obtainMessage(0,tipStatus).sendToTarget();
                                     break;
                             }
@@ -196,7 +191,7 @@ public class Communication {
             mReader.close();
             clientSocket.close();
         } catch (Exception e) {
-//            Log.e(TAG,"通信资源关闭失败");
+            e.printStackTrace();
         }
 
     }

@@ -21,6 +21,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class GpsInfo {
     private Context context;
@@ -33,6 +35,9 @@ public class GpsInfo {
     private List<GpsSatellite> satelliteList = new ArrayList<>(); // 卫星信息
     private static final String TAG = "GpsInfo";
     private Communication communication;
+
+    private Timer timer = new Timer();
+
 
     public GpsInfo(Context context, Communication communication){
         this.context = context;
@@ -51,9 +56,28 @@ public class GpsInfo {
         }
         locationListener = new MyLocationListener();
         updateLocation(location);
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 8, locationListener);
-        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,3000,8,locationListener);
+        //设置每3s获取一次GPS定位信息
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
+        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,1000,1,locationListener);
         lm.addGpsStatusListener(statusListener);
+
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                JSONObject sendMsg = new JSONObject();
+                JSONObject data = new JSONObject();
+                try {
+                    sendMsg.put("status",Config.STATUS_LOCATION);
+                    data.put("longitude",longitude);
+                    data.put("latitude",latitude);
+                    data.put("accuracy",location.getAccuracy());
+                    sendMsg.put("data",data.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                communication.send(sendMsg.toString());
+            }
+        }, 3000, 3000);
     }
 
     //更新位置信息
@@ -63,22 +87,22 @@ public class GpsInfo {
            this.longitude = location.getLongitude();
            this.latitude = location.getLatitude();
            Log.e(TAG,"Accuracy():"+location.getAccuracy());
-            JSONObject sendMsg = new JSONObject();
-            JSONObject data = new JSONObject();
-            try {
-                sendMsg.put("status",Config.STATUS_LOCATION);
-                data.put("longitude",this.longitude);
-                data.put("latitude",this.latitude);
-                data.put("accuracy",this.location.getAccuracy());
-                sendMsg.put("data",data.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-           communication.send(sendMsg.toString());
-           Log.e(TAG,"经度:"+location.getLatitude());
-            Log.e(TAG,"纬度:"+location.getLongitude());
-              Log.e(TAG,"方向:"+location.getBearing());
-            Log.e(TAG,"速度:"+location.getSpeed());
+//            JSONObject sendMsg = new JSONObject();
+//            JSONObject data = new JSONObject();
+//            try {
+//                sendMsg.put("status",Config.STATUS_LOCATION);
+//                data.put("longitude",this.longitude);
+//                data.put("latitude",this.latitude);
+//                data.put("accuracy",this.location.getAccuracy());
+//                sendMsg.put("data",data.toString());
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//           communication.send(sendMsg.toString());
+//           Log.e(TAG,"经度:"+location.getLatitude());
+//            Log.e(TAG,"纬度:"+location.getLongitude());
+//              Log.e(TAG,"方向:"+location.getBearing());
+//            Log.e(TAG,"速度:"+location.getSpeed());
         }
     }
 
@@ -110,6 +134,7 @@ public class GpsInfo {
      */
     private GpsStatus.Listener statusListener = new GpsStatus.Listener() {
         // GPS状态变化时的回调，如卫星数发生改变
+        @Override
         public void onGpsStatusChanged(int event) {
             GpsStatus status = null;
             if (ContextCompat.checkSelfPermission(context,

@@ -20,12 +20,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.letsmeet.letsmeetproject.communicate.Communication;
 import com.letsmeet.letsmeetproject.gps.GpsInfo;
+import com.letsmeet.letsmeetproject.http.HttpUtil;
 import com.letsmeet.letsmeetproject.sendAllData.SendAllData;
 import com.letsmeet.letsmeetproject.sensor.MySensorEventListener;
 import com.letsmeet.letsmeetproject.sensor.OrientDetector;
@@ -33,11 +36,14 @@ import com.letsmeet.letsmeetproject.sensor.StepDetector;
 import com.letsmeet.letsmeetproject.setting.MySettingActivity;
 import com.letsmeet.letsmeetproject.wifiInfo.WifiScan;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements HttpUtil.HttpResponse {
     private static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
     private Context context = this;
     private Communication communication;
@@ -53,15 +59,33 @@ public class MainActivity extends AppCompatActivity {
     private OrientDetector orientDetector;
     private StepDetector stepDetector;
     private TextView stepDetectorView;
-    Dialog dia;
-    ImageView imageView;
-    SharedPreferences sharedPreferences;
-//    private boolean isCollectData = false;
-    private int frequency;
-    private int stepLen;
-    private int parament;
+    private Dialog diaFinish;
+    private ImageView imageView;
+    private SharedPreferences sharedPreferences;
     private String TAG = "MainActivity";
-    SendAllData sendAllData = null;
+    private SendAllData sendAllData = null;
+    private Dialog beginNavigate;
+
+    private HttpUtil httpUtil;
+    String url = "navigateId";
+    private static int navigateId;
+    EditText navigateIdEdit;
+
+    private String user;
+
+    @Override
+    public void httpResponseCallback(String responseResult) {
+        Log.e(TAG,responseResult);
+        JSONObject rcv;
+        try {
+            rcv = new JSONObject(responseResult);
+            navigateId = rcv.getInt("navigateId");
+            navigateIdEdit.setText(navigateId+"");
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +93,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Intent intent = getIntent();
-        String user = intent.getStringExtra("user");
-
+        user = intent.getStringExtra("user");
         myView = (MyView) findViewById(R.id.myView);
         otherView = (MyView) findViewById(R.id.otherView);
         navigateView = (TextView) findViewById(R.id.navigation);
@@ -96,36 +119,109 @@ public class MainActivity extends AppCompatActivity {
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dia.show();
+                diaFinish.show();
             }
         });
         Context context = MainActivity.this;
-        dia = new Dialog(context, R.style.edit_AlertDialog_style);
-        dia.setContentView(R.layout.meet);
-        ImageView imageView = (ImageView) dia.findViewById(R.id.meet_img);
+        diaFinish = new Dialog(context, R.style.meet_dialog_style);
+        diaFinish.setContentView(R.layout.meet);
+        ImageView imageView = (ImageView) diaFinish.findViewById(R.id.meet_img);
 //        imageView.setBackgroundResource(R.mipmap.iv_android);
 //        imageView.setAlpha(1);
         //选择true的话点击其他地方可以使dialog消失，为false的话不会消失
-        dia.setCanceledOnTouchOutside(true); // Sets whether this dialog is
-        Window w = dia.getWindow();
+        diaFinish.setCanceledOnTouchOutside(true); // Sets whether this dialog is
+        Window w = diaFinish.getWindow();
         WindowManager.LayoutParams lp = w.getAttributes();
         lp.x = 0;
         lp.y = 40;
-        dia.onWindowAttributesChanged(lp);
+        diaFinish.onWindowAttributesChanged(lp);
         imageView.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        dia.dismiss();
+                        diaFinish.dismiss();
                     }
                 });
+        initNavigate();
+        httpUtil = new HttpUtil(url,this);
+
+//        JSONObject ret = new JSONObject();
+////        try {
+////            ret.put("status",5);
+////            ret.put("data",user);
+////        } catch (JSONException e) {
+////            e.printStackTrace();
+////        }
+////        communication.send(ret.toString());
+
+    }
+
+    private void initNavigate(){
+        beginNavigate = new Dialog(context,R.style.navigate_dailog);
+        beginNavigate.setContentView(R.layout.navigate_begin);
+        beginNavigate.setCanceledOnTouchOutside(true);
+        Window w = beginNavigate.getWindow();
+        WindowManager.LayoutParams lp = w.getAttributes();
+        lp.x = 0;
+        lp.y = 40;
+        beginNavigate.onWindowAttributesChanged(lp);
+
+        beginNavigate.setTitle("开始导航");
+
+//        beginNavigate.setPositiveButton
+
+        Button addInBtn = (Button) beginNavigate.findViewById(R.id.add_in_navigate);
+        Button creatBtn = (Button) beginNavigate.findViewById(R.id.creat_navigate);
+
+        navigateIdEdit = (EditText) beginNavigate.findViewById(R.id.navigateId);
+        Log.e("Main4:",user);
+        addInBtn.setOnClickListener(new View.OnClickListener() {
+            JSONObject ret = new JSONObject();
+            @Override
+            public void onClick(View v) {
+                Log.e(TAG,"点击了加入导航按钮");
+                Log.e(TAG,"id:"+navigateIdEdit.getText().toString());
+                navigateId = Integer.parseInt(navigateIdEdit.getText().toString());
+                try {
+                    ret.put("status",6);
+                    JSONObject data = new JSONObject();
+                    data.put("navigateId",navigateId);
+                    data.put("user",user);
+                    Log.e(TAG,data.toString()+" "+user);
+                    ret.put("data",data);
+                    Log.e(TAG,ret.toString());
+                    communication.send(ret.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+
+            }
+        });
+        creatBtn.setOnClickListener(new View.OnClickListener() {
+            JSONObject ret = new JSONObject();
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    ret.put("data","for navigateId");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Log.e(TAG,"点击了加入创建导航按钮"+ret.toString());
+                httpUtil.sendMsg(ret.toString());
+                Log.e(TAG,"id:"+navigateIdEdit.getText().toString());
+            }
+        });
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         boolean isCollectData = sharedPreferences.getBoolean("dataCollectSwitch",false);
-        Log.e(TAG,"isCollect:"+isCollectData);
+        Log.e(TAG,"isCollectData:"+isCollectData);
 
         int frequency=Integer.parseInt(sharedPreferences.getString("frequency","20"));//根据key获取对应的数据
         Log.e(TAG,"frequency:"+frequency);
@@ -213,14 +309,21 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id){
             case R.id.setting:
-                Log.e("Main","点击了设置");
+//                Log.e("Main","点击了设置");
                 Intent intent = new Intent(this,MySettingActivity.class);
                 startActivityForResult(intent,0);
                 break;
             case R.id.clear:
-                Log.e("Main","点击了清屏");
+//                Log.e("Main","点击了清屏");
                 myView.viewClear();
                 otherView.viewClear();
+                break;
+            case R.id.over:
+//                Log.e("Main","点击了结束");
+                diaFinish.show();
+                break;
+            case R.id.beginNavigate:
+                beginNavigate.show();
                 break;
         }
         return super.onOptionsItemSelected(item);

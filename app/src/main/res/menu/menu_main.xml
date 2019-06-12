@@ -2,12 +2,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.letsmeet.letsmeetproject.MainActivity">
+
+    <item
+        android:id="@+id/beginNavigate"
+        android:title="@string/beginNavigate"
+        app:showAsAction="always"
+       />
     <item
         android:id="@+id/setting"
-        android:title="采样设置"
+        android:title="@string/collect_set"
         app:showAsAction="never" />
     <item
         android:id="@+id/clear"
-        android:title="清屏"
+        android:title="@string/clear"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/over"
+        android:title="@string/over"
         app:showAsAction="never" />
 </menu>

@@ -1,23 +1,21 @@
 package com.letsmeet.letsmeetproject.setting;
 
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 
 import com.letsmeet.letsmeetproject.R;
 
-public class MySettingActivity extends AppCompatActivity {
+public class FrequencySettingActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_my_setting);
+        setContentView(R.layout.activity_frequency_setting);
 
         setupActionBar();
-        setTitle(this.getString(R.string.setting));
-        getFragmentManager().beginTransaction().replace(R.id.setting_content,new MyPreferenceFragment()).commit();
+        setTitle("频率设置");
+        getFragmentManager().beginTransaction().replace(R.id.setting_frequency_content,new FrequencyPreferenceFragment()).commit();
     }
     /**
      * Set up the {@link android.app.ActionBar}, if the API is available.

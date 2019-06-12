@@ -14,6 +14,7 @@ public class MySensorEventListener implements SensorEventListener {
     public float[] magneticValues = new float[3];
     public float[] gyroscopeValues = new float[3];
     public float pressure;
+    public float light;
 //    public float[] angleValues = new float[3];
 
     private SensorManager sensorManager;
@@ -51,6 +52,8 @@ public class MySensorEventListener implements SensorEventListener {
         Sensor gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         //气压计
         Sensor pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+//        光强度
+        Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
         //注册SensorEventListener使其生效
         sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_UI);
@@ -59,6 +62,7 @@ public class MySensorEventListener implements SensorEventListener {
 //        sensorManager.registerListener(this, stepCounter, SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_UI);
+        sensorManager.registerListener(this,lightSensor,SensorManager.SENSOR_DELAY_UI);
     }
 
 
@@ -100,8 +104,12 @@ public class MySensorEventListener implements SensorEventListener {
             case Sensor.TYPE_PRESSURE:
                 pressure = event.values[0];
                 break;
+            case Sensor.TYPE_LIGHT:
+                light = event.values[0];
+                break;
         }
 //        calculateDegree();
+
     }
 
 //    private void calculateDegree(){
@@ -117,6 +125,7 @@ public class MySensorEventListener implements SensorEventListener {
 //            myView.orientChanged(rotateDegree);
 //            locationView.myDegreeChanged(rotateDegree);
 //            lastRotateDegree = rotateDegree;
+//
 //        }
 //    }
 

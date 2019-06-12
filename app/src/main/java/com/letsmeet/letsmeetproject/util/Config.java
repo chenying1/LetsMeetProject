@@ -2,10 +2,12 @@ package com.letsmeet.letsmeetproject.util;
 
 public class Config {
     //服务器ip地址、端口号
-    public static final String SERVER_IP = "222.20.73.169";
-//    public static final String SERVER_IP = "39.105.206.148";
+//    public static final String SERVER_IP = "222.20.74.208";
+    public static final String SERVER_IP = "39.105.206.148";
     public static final int SERVER_PORT = 1234;
     public static final int SERVER_PORT_SENDALLDATA = 1235;
+
+    public static final int SERVER_PORT_APPLICATION = 8080;
 
     //定时器周期ms
     public static final int period = 1000;

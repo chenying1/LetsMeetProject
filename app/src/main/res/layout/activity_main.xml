@@ -66,13 +66,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!--在有了圈内指针后，指南针可以去掉，设置为不可见。后期应该可以删除-->
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="40dp"
         android:layout_height="40dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/compass" />
+        app:srcCompat="@drawable/compass"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/navigation"
@@ -90,15 +92,27 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+    <ImageView
+        android:id="@+id/compass"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+
+        android:layout_marginTop="56.5dp"
+        android:layout_marginEnd="56.8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/compass_center" />
 
     <com.letsmeet.letsmeetproject.LocationView
         android:id="@+id/locationView"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginTop="5dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginTop="0dp"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+
 
     <!--android:background="@color/grey"-->
 

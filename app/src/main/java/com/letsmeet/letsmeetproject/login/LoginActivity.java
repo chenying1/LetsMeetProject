@@ -10,24 +10,41 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.letsmeet.letsmeetproject.MainActivity;
 import com.letsmeet.letsmeetproject.R;
+import com.letsmeet.letsmeetproject.http.HttpUtil;
+import com.letsmeet.letsmeetproject.register.RegisterActivity;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity{
+public class LoginActivity extends AppCompatActivity implements HttpUtil.HttpResponse {
 
     private Context context = this;
     private AutoCompleteTextView userView;
     private EditText passwordView;
+
+    private final static String TAG = "LoginActivity";
+
+    private HttpUtil httpUtil;
+    private String url = "login";
+    private String user;
+    private String password;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,105 +57,86 @@ public class LoginActivity extends AppCompatActivity{
         userView = (AutoCompleteTextView) findViewById(R.id.user);
         passwordView = (EditText) findViewById(R.id.password);
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.sign_in_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                attemptLogin();
+        MyOnclickListener onclickListener = new MyOnclickListener();
+
+        Button signInButton = (Button) findViewById(R.id.sign_in_button);
+        signInButton.setOnClickListener(onclickListener);
+
+        TextView new_user_register = (TextView) findViewById(R.id.new_user_register);
+        new_user_register.setOnClickListener(onclickListener);
+        httpUtil = new HttpUtil(url,this);
+    }
+
+    private class MyOnclickListener implements OnClickListener{
+        @Override
+        public void onClick(View v) {
+            int id = v.getId();
+            switch (id){
+                case R.id.sign_in_button:
+//                    attemptLogin();
+                    loginIgnore();
+                    break;
+                case R.id.new_user_register:
+                    Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+                    startActivity(intent);
+                    break;
+                case R.id.forget_password:
+                    break;
             }
-        });
+        }
+    }
+
+    @Override
+    public void httpResponseCallback(String responseResult) {
+        Log.e(TAG,"responseResult:"+responseResult);
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra("user",user);
+        context.startActivity(intent);
     }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
-     * If there are form errors (invalid email, missing fields, etc.), the
+     * If there are form errors (invalid user, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        // Reset errors.
-        userView.setError(null);
-        passwordView.setError(null);
-
         // Store values at the time of the login attempt.
         //用户名和密码
-        final String email = userView.getText().toString();
-        final String password = passwordView.getText().toString();
-
-        boolean cancel = false;
-        View focusView = null;
-
+        user = userView.getText().toString();
+        password = passwordView.getText().toString();
+        md5(password);
         // Check for a valid password, if the user entered one.
         if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             passwordView.setError(getString(R.string.error_invalid_password));
-            focusView = passwordView;
-            cancel = true;
         }
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
+        // Check for a valid user address.
+        if (TextUtils.isEmpty(user)) {
             userView.setError(getString(R.string.error_field_required));
-            focusView = userView;
-            cancel = true;
-        } else if (!isEmailValid(email)) {
+        } else if (!isEmailValid(user)) {
             userView.setError(getString(R.string.error_invalid_email));
-            focusView = userView;
-            cancel = true;
         }
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("user",user);
+            jsonObject.put("password",password);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        httpUtil.sendMsg(jsonObject.toString());
 
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView.requestFocus();
-        } else {
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            intent.putExtra("user",email);
-            context.startActivity(intent);
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        String urlstring = "http://222.20.73.120:8080/login";
-//                        URL url = new URL(urlstring);
-//                        //得到connection对象。
-//                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//                        //设置请求方式
-//                        connection.setRequestMethod("POST");
-//                        connection.setDoOutput(true);
-//
-//                        // 设置文件类型:
-//                        connection.setRequestProperty("Content-Type","application/json; charset=UTF-8");
-//
-//                        //连接
-//                        connection.connect();
-//                        //发送数据
-//                        DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
-//                        JSONObject jsonObject = new JSONObject();
-//                        jsonObject.put("user",email);
-//                        jsonObject.put("password",password);
-//                        wr.writeBytes(jsonObject.toString());
-//                        wr.flush();
-//                        wr.close();
-//                        //得到响应码
-//                        int responseCode = connection.getResponseCode();
-//                        if(responseCode == HttpURLConnection.HTTP_OK){  //200
-//                            //得到响应流
-//                            InputStream inputStream = connection.getInputStream();
-//                            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream,"utf-8"));
-//                            String result = reader.readLine();
-//                            //将响应流转换成字符串
-////                            String result = inputStream.toString();//将流转换为字符串。
-//                            Log.e("kwwl","result============="+result);
-//                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-//                            context.startActivity(intent);
-//                        }
-//
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }).start();
-        }
+
     }
+
+    //测试其他功能时可以使用此代码，将登录功能的验证屏蔽掉，直接跳转到主界面。
+    private void loginIgnore(){
+        user = userView.getText().toString();
+        password = passwordView.getText().toString();
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra("user",user);
+        context.startActivity(intent);
+    }
+
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
@@ -174,5 +172,31 @@ public class LoginActivity extends AppCompatActivity{
         }
     }
 
+    public static String md5(String string) {
+        if (TextUtils.isEmpty(string)) {
+            return "";
+        }
+        MessageDigest md5 = null;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            byte[] bytes = md5.digest(string.getBytes());
+            String result = "";
+            for (byte b : bytes) {
+                String temp = Integer.toHexString(b & 0xff);
+                if (temp.length() == 1) {
+                    temp = "0" + temp;
+                }
+                result += temp;
+            }
+            Log.e(TAG,"md5:"+result);
+            return result;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
 }
+
+
 
